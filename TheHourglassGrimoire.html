@@ -1,0 +1,425 @@
+<!doctype html>
+<!--
+                          The Hourglass Grimoire
+
+                   By James Babcock and Vincent Luczlow
+               Based on The Center for Applied Rationality
+                 April 2015 Applied Rationality Workshop
+
+This is a single-file web page: all Javascript, CSS, and images are embedded in
+the file. This is to make it easy to carry around, open from email attachments,
+store on your phone for offline use, and whatnot. Open this in a browser for
+more metadata, including copyright information and terms of redistribution.
+
+-->
+<html>
+<head>
+<title>The Hourglass Grimoire</title>
+
+<!-- Include jQuery. Ideally, we'd inline or remove this to avoid having any
+dependency on internet access, but it's a bit bulky for that. -->
+<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+
+<!-- {{{ --><style>
+/******************************************************************************
+ * Polaris                                                                    *
+ * This is a little icon that appears in the top-left corner (screen version  *
+ * only), as a reminder to stay oriented with respect to a goal.              *
+ *****************************************************************************/
+.polaris {
+	display: none;
+}
+
+@media screen and (min-width: 1000px) {
+	.polaris {
+		display: block;
+	}
+	.polaris img {
+		position: fixed;
+		width: 80px;
+		left: 20px;
+		top: 20px;
+	}
+}
+
+/******************************************************************************
+ * Top-level title and table of contents pages                                *
+ *****************************************************************************/
+.titlePage {
+	text-align: center;
+	page-break-after: always;
+}
+
+.titlePage H1 {
+	font-size: 26pt;
+}
+
+.titlePageHourglass {
+	display: block;
+	padding-top: 50px;
+	padding-bottom: 50px;
+	margin: 0 auto;
+	opacity: 0.2;
+}
+
+@media print {
+	.titlePage {
+		padding-top: 2in;
+	}
+}
+
+@media screen {
+	.titlePage {
+		padding-top: 15px;
+	}
+
+	#TableOfContents {
+		padding-bottom: 40px;
+	}
+}
+
+/******************************************************************************
+ * Section title pages                                                        *
+ *****************************************************************************/
+.sectionTitle {
+	text-align: center;
+}
+
+.sectionTitle .attribution {
+	font-style: italic;
+}
+
+@media print {
+	.section {
+		page-break-before: right;
+	}
+	.sectionTitle h1 {
+		padding-top: 3in;
+	}
+}
+
+@media screen {
+	.section {
+		margin-top: 45px;
+	}
+	.sectionTitle {
+		margin-bottom: 45px;
+	}
+}
+
+/******************************************************************************
+ * Page numbering                                                             *
+ *****************************************************************************/
+@media screen {
+	.pageNumber {
+		display: none;
+	}
+
+	.tocPageNumber {
+		display: none;
+	}
+}
+
+@media print {
+	.pageNumber {
+		width: 100%;
+		text-align: right;
+		right: 1.0in;
+		bottom: 1.0in;
+	}
+
+	.numberedPage {
+		page-break-after: always;
+	}
+
+	.tocPageNumber {
+		position: relative;
+		margin-left: 30px;
+	}
+}
+
+/******************************************************************************
+ * General formatting                                                         *
+ *****************************************************************************/
+@media screen {
+	body {
+		margin: 0 auto;
+		width: 800px;
+		padding-bottom: 100px;
+	}
+}
+
+H1 {
+	font-size: 20pt;
+}
+
+P {
+	text-align: justify;
+}
+
+.instructions {
+}
+
+.step {
+	font-weight: bold;
+}
+
+
+@media screen {
+	.worksheet {
+		display: none;
+	}
+}
+
+@media print {
+	button.beginWorksheet {
+		display: none;
+	}
+	.worksheet {
+		page-break-before: always;
+	}
+	textarea {
+		opacity: 0;
+		height: 2.5in;
+	}
+}
+
+<!-- }}} --></style>
+<!-- {{{ --><script>
+
+var numCopiesOfEachWorksheet = 3;
+
+function beginWorksheet(section, worksheet)
+{
+	worksheet.show();
+}
+
+// Find all the worksheets (elements with the "worksheet" class), and duplicate
+// them so that there are numCopies copies total. Copies other than the first
+// will have the "extraCopy" CSS class. (This is for printing. The extra copies
+// have CSS which makes them appear in printouts, but not in the screen
+// rendering.)
+function duplicateWorksheets(numCopies)
+{
+	var worksheets = $(".worksheet");
+	var copiesAdded = numCopies-1;
+	
+	for(var ii=0; ii<worksheets.length; ii++)
+	{
+		var worksheet = worksheets[ii];
+		for(var jj=0; jj<copiesAdded; jj++)
+		{
+			var copy = $(worksheet.outerHTML);
+			copy.addClass("extraCopy");
+			copy.insertAfter(worksheet);
+		}
+	}
+}
+
+/// Returns an anchor that would be used to link to the given element: either
+/// the element's ID, or the ID of the closest element in the parent-chain,
+/// prepended with a '#'. If there's no suitable ID, returns null instead.
+function getAnchorNameFor(element)
+{
+	while(element)
+	{
+		var id = $(element).attr('id');
+		if(id && id.length>0)
+			return '#'+id;
+		element = element.parentElement;
+	}
+
+	return null;
+}
+
+function addPageNumbers()
+{
+	var numberedPages = $(".numberedPage");
+	var pageNumbers = {};
+
+	for(var ii=0; ii<numberedPages.length; ii++)
+	{
+		var pageElement = numberedPages[ii];
+		var pageNumber = ii+1;
+		var pageNumberElement = $('<div class="pageNumber">'+pageNumber+'</div>');
+		pageNumberElement.prependTo(pageElement);
+		
+		var anchorName = getAnchorNameFor(pageElement);
+		if(anchorName && !(anchorName in pageNumbers))
+			pageNumbers[anchorName] = pageNumber;
+	}
+
+	var pageNumberRefs = $(".pageNumberRef");
+
+	for(var ii=0; ii<pageNumberRefs.length; ii++)
+	{
+		var linkElement = $(pageNumberRefs[ii]);
+		var target = linkElement.attr('href');
+		var pageNumberStr = "?";
+		if(anchorName in pageNumbers)
+			pageNumberStr = ""+pageNumbers[target];
+		$('<span class="tocPageNumber">'+pageNumberStr+'</span>').appendTo(linkElement);
+	}
+}
+
+$(document).ready(function()
+{
+	$("button.beginWorksheet").click(function() {
+		var section = $(".section", $(this).parents());
+		var worksheet = $(".worksheet", section).first();
+		beginWorksheet(section, worksheet);
+	});
+
+	duplicateWorksheets(numCopiesOfEachWorksheet);
+	addPageNumbers();
+});
+
+<!-- }}} --></script>
+</head>
+<body>
+
+<div class="titlePage"> <!-- {{{ -->
+	<H1>The Hourglass Grimoire</H1>
+	<div class="attribution">
+		By James Babcock and Vincent Luczlow<br>
+		<br>
+		Based on<br>
+		The Center for Applied Rationality<br>
+		April 2015 Applied Rationality Workshop
+
+		<!-- Source: https://pixabay.com/en/hourglass-sand-glass-sketch-time-30146/
+			 Image licensed CC0/public domain. Made into a data: URL so this can
+			 stay single-file. -->
+		<img class="titlePageHourglass" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+DQo8IURPQ1RZUEUgc3ZnIFBVQkxJQyAiLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4iICJodHRwOi8vd3d3LnczLm9yZy9HcmFwaGljcy9TVkcvMS4xL0RURC9zdmcxMS5kdGQiIFsNCjwhRU5USVRZIG5zX3N2ZyAiaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPg0KCTwhRU5USVRZIG5zX3hsaW5rICJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj4NCl0+DQo8c3ZnIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDEzMS45NjcgMjU1LjM0MSIgaGVpZ2h0PSIyNTUuMzQiIHZpZXdCb3g9IjAgMCAxMzEuOTY3IDI1NS4zNDEiIHdpZHRoPSIxMzEuOTciIHhtbDpzcGFjZT0icHJlc2VydmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+DQo8ZyBmaWxsLXJ1bGU9ImV2ZW5vZGQiPg0KCTxwYXRoIGQ9Im0yLjk3MywxMjguODdjLjE1MS0xLjA1Ni40NjQtMS45NSAxLjM1Ny0yLjI2My0uNzUtMy4wMjEtNC41OTUtMi45NDktNC4wNzMtNy4yNDJsLjgzLjIyNiAuNTI4LS42NzljMS4xMzIsNC4zOTUgMTQuMTM1LDYuODI3IDE0LjAzMS0uNDUzLTMuMzMtLjE1Ni0xMC42NjEsMS45MDItMTEuMzE1LTMuMTY4bC44MDkuMTYyIC41NDktLjYxNGM2LjkwMSw0LjI0NCA5LjkzLTUuMDY1IDEwLjQxLTExLjc2OCAxLjIyMi0xNy4wNjMtNS42NDItMzYuMTYyLTQuMDczLTUzLjg2MS0yLjI0Ny44NTEtNS41LTIuMTE4LTQuOTc5LDEuMzU4bC0uNjc5LS4yMjYtLjY3OS4yMjZjLS42MDUtMi4yNjEtMS4zMzctNC4zOTYtMS44MS02Ljc4OWwuNjc5LjIyNyAuMjI2LS42NzljMy4yNDEsMS4yNSA3LjYyOCwxLjA0MSAxMC40MS0uNDUzbC41MjguNjc5IC44My0uMjI3Yy0uMDEsMS4wNjYuNzgsMS4zMzMuNDUzLDIuNzE2bC0uNjc5LS4yMjctLjY3OS4yMjdoLS45MDVjLTMuNDU1LDIzLjQ4MiAxMC4zNzYsNDYuODIzIDIuMjYzLDY4LjM0NCAxLjE2NywyLjM4OCAyLjY3MiwzLjg1NSAyLjI2Myw2LjMzNy0uNDY4LDIuODQxLTMuODM1LDMuMDcyLTQuNTI2LDUuNDMxIDIuNTY1LDMuNDkxIDQuMjEsNy44NDQgNC45NzksMTIuMjIgMy40NiwxOS43LTYuNzM3LDM5Ljk0LTQuMDc0LDU5LjI5MmwuNjc5LjIyNyAuNjc5LS4yMjdjLS4wOTUsMy4zMjYtLjQzMywzLjc2My0uNDUzLDYuNzlsLS44My0uMjI3LS41MjguNjc5Yy03LjE4Ny0xNC45MTIgMi4xMTUtMzUuNzU4IDIuMjYzLTU0LjMxMyAuMDc0LTkuMjctMi4wOTgtMjkuMzk1LTEzLjU3OC0yMS4yNzJsLS4yMjctLjY3OS0uNjc5LjIxeiI+PC9wYXRoPg0KCTxwYXRoIGQ9Im0xMjguMDMsMTEuOTYxIC4zMTYtLjc3YzEuMDk3Ljg2NSAxLjkxNywyLjAwNSAyLjI2NCwzLjYyMWwtLjgwOS0uMTYyLS41NS42MTRoLS40NTJsLS4wMzItMS4zMjUtMS4zMjYtLjAzM3YtMS4zNThsLjU5LS41ODd6Ij48L3BhdGg+DQoJPHBhdGggZD0ibTEyOS43OCwxOS4xMTIgLjgzLS4yMjZjLS41ODUsMi4yNDQgMS4wOTUsMi4yMjQuOTA1LDQuMDczaC0xLjEzMmwtLjY3OS45MDVjLS40NC0uMDEyLS4zNTItLjU1NC0uNDUzLS45MDUtMTEuNjgyLDYuODE5LTI3LjYyLDEyLjQyNC00NC44MDksMTIuNjczbC4yMjctLjgzLS42NzktLjUyOGMxNy43MDYtMi42NjEgMzUuMjc4LTUuNDU3IDQ1LjI2MS0xNS44NDFsLjUyLjY3OXoiPjwvcGF0aD4NCgk8cGF0aCBkPSJtMTMwLjg0LDIzLjg2NCAuNjgtLjkwNWMuNTMuMDczLjM4Mi44MjUuNDUyLDEuMzU4bC0xLjEzMi0uMjI2LTEuMTMxLS4yMjdoMS4xM3oiPjwvcGF0aD4NCgk8cGF0aCBkPSJtMTI2LjIyLDQzLjQ2MiAuNzcuMzE3Yy0uOTksMS41NzUtMS41MTcsMy42MTMtMi4yNjMsNS40MzFsLS42OC0uMjI2LS42NzktLjIyN2MtMS4yODIsMS4zODktNC4zNjctMS40NTUtNC45NzkuOTA1bC0uODMtLjIyNi0uNTI4LjY3OWMtMS4wNjMtMS4zNS4xMi00Ljk0OC0xLjgxLTUuNDMxLTIuNTYxLDMyLjU5My0xOS42NjQsNTAuNjQyLTM1Ljc1Nyw2OS43MDJsLS41MjgtLjY3OS0uODI5LjIyNmMzLjg4Mi03LjkxOCAxMi4xODktMTYuNTExIDE3LjY1MS0yMy45ODggOS42NDYtMTMuMjA1IDE1LjQ5OC0yNy43MTYgMTYuNzQ3LTQ4Ljg4Mi0yMi4yMzcsNi40MjUtNTguNTc1LDkuMTE4LTg1LjU0NCwyLjcxNi0zLjQ5Ni0uODMtNy4wMDUtMi4yODUtMTAuNDEtMi4yNjNsLS41MjgtLjY3OS0uODMuMjI2Yy0uMDkyLTEuNDE2LjMwNS0zLjMyMi0uNDUzLTQuMDczbC43Ny0uMzE3IC41ODgtLjU4OGMyOC43NDYsOS4zMjggNzAuMDIzLDcuNzUyIDk4LjY2OS0uNDUzbC41ODkuNTg4IC43Ny4zMTdjLTMuNjc3LDUuNzExIDQuNzM4LDguODk4IDkuNTA1LDYuMzM2bC42LjU4MnoiPjwvcGF0aD4NCgk8cGF0aCBkPSJtMTI5LjkzLDk1LjYwNCAuNjgtLjIyN2MuOTk4LDYuOTA5LS4wNjcsMTUuNjA0LTMuNjIxLDE5LjQ2MiAzLjU0OSwyLjkzNSAzLjU0NCw5LjA1NS0uOTA1LDExLjMxNSAxMi45OTQsMTguODU1LTMuMTk2LDUxLjAzMi0uOTA1LDc1LjEzMyAuMTU1LDEuNjM4Ljk1MSwyLjk5OS45MDUsNC45NzlsLS41ODkuNTg4LS4zMTYuNzdjLTIuNzMzLTIuOTgyLTMuMjY0LTkuNjI2LTIuNzE2LTE2Ljc0NyAuNzc1LTEwLjA2MiA2LjQzMi0yOC41OTUgNi4zMzctNDIuMDkzLS4wNTUtNy44NTItMy4yMzUtMjEuNzA0LTkuOTU4LTIxLjI3Mi02LjAwMy4zODUtNi45NzUsMTUuNjY5LTYuMzM2LDI0LjQ0IDEuMTc2LDE2LjE2MyA4LjM0MywzNi42NjIgNS44ODQsNTAuNjkzbC0uNTI4LS42OC0uODMuMjI3Yy40NzctMTQuMTctMy4yMTctMjUuNTU0LTUuNDMxLTM4LjkyNS0yLjE3OS0xMy4xNTUtMi4yNDMtMjguOTM0IDMuNjIxLTM3LjU2Ni00LjI0MS0yLjAxMy0zLjY3OC04LjA2Mi0uNDUzLTEwLjg2My0zLjM5My01LjYyNi00LjU1My0xNS43OTMtMy4xNjgtMjMuNTM2bC41MjcuNjc5IC44My0uMjI2Yy4zNTQsNy42MDEuODUyLDIyLjQ2MSA4LjYsMjIuNjMgNy40MjcuMTYyIDcuMjAyLTEzLjEzIDcuNjk0LTE5LjAxbC43LjIxNHptLTMuODUsMjMuMzA2Yy0zLjcyOS4yNDQtNy4xNi4yOTctMTAuODYyLTEuMzU4LTMuNTIsNi4zIDExLjg0LDguMTQgMTAuODYsMS4zNnoiPjwvcGF0aD4NCgk8cGF0aCBkPSJtMTI2LjkxLDIwOS4yMSAuNTI3LS42NzljMi4wNjksMi4zMjkuMjUxLDQuMDkxLjkwNSw2Ljc4OSAuOTAzLDMuNzI1IDQuMjMsNC4zMzcgMy4xNjksMTAuNDEtLjE1OC45LTEuMjI1LDEuNTY2LTEuMzU4LDIuNzE2LS40MjUsMy42NjIgMS4xNzUsNy4yNzktMi4yNjMsOS41MDVsLS41NS0uNjE0LS44MDkuMTYxYy4xNTItMS41MDggMS4zMTItMi4wMDguOTA1LTQuMDczLTIuMTM3LjMzMi0zLjY2NSwxLjk4Ny01LjQzMSwzLjE2OC0xMi4xMDcsOC4wOTctMzEuNDM4LDEzLjMxNi01MC42OTMsMTQuNDg0LTI2LjI0NCwxLjU5MS01MS4xMTQtNS43ODMtNjUuNjI5LTE3LjJsLjg2LS40MDcgLjA0NS0uOTVjMTMuMDQ3LDkuMzggMzkuNDk3LDE3LjU2MyA2NS4xNzYsMTUuODQyIDEwLjQ2NS0uNzAyIDIxLjMwMS0yLjg2NCAzMS42ODMtNi4zMzcgOS4xNDItMy4wNTkgMjEuNDYtNy4xNDUgMjMuOTg4LTE0LjAzMS0uMDE4LjA0OS0uNDA3LS4wMzktLjQ1MiwwbC4yMjctLjgyOS0uNjgtLjUyOGMuNzctMS44MDYgMy40MDktNC4xMjEgMS44MTEtNi43ODkgLjAyMiwxLjM4LS40MTEsMi4zMDUtMS4zNTcsMi43MTZsLS4yMjctLjY4LS42NzkuMjI3Yy4zMzMtNC4xNzguNDUyLTYuMDE1LjQ1Mi0xMS43NjhsLjIyNy0uNjc5LS42NzkuMjI2di0uOTA1bC44My4yMXoiPjwvcGF0aD4NCgk8cGF0aCBkPSJtMTQuNzQsMjA4LjUzYy40MDMtLjIuODEtLjM5Ny45MDUtLjkwNWwuNjc5LjIyNyAuNjc5LjIyNmMxLjUyNCwzLjE1My0xLjAzNSwxMC4zOSAxLjgxMSwxMi4yMjFsLS42NzkuMjI3IC4yMjcuNjc5aC0uNDUzYy0uOTMyLjEyNS0uNDI2LDEuNjg3LTEuMzU4LDEuODExbC0uNTI4LS42NzktLjgzLjIyN3YtMTMuMTI2bC0uMjI2LS40NTMtLjIyNy0uNDZ6Ij48L3BhdGg+DQoJPHBhdGggZD0ibTExNC4wOSwyMjAuNTItLjY3OS0uMjI3Yy41MDItMzQuMDI2LTEwLjAyMS01Ni43MTgtMjQuODk0LTc3Ljg0OS0xLjk3Ny0yLjgwOC00LjQyLTYuNzQ2LTYuNzktMTAuNDExLTMuNTAyLTUuNDE2LTcuMjQxLTkuNTctNC41MjUtMTYuMjk0bC41MjcuNjc5IC44My0uMjI3Yy0uNDA0LDkuNDc1IDcuMzIyLDE3LjQ1IDExLjc2OCwyMy41MzYgMTAuODc3LDE0Ljg4OSAyMC4zNjgsMzEuMDQ0IDIzLjk4OSw1Mi41MDMgLjcyOCw0LjMxNS4yNTUsOS4yNTYgMS44MTEsMTMuMTI2LS4xNDYtLjM2LjIyNC0uNDQ2LjQ1Mi0uNDUzbC4zMTYuNzcgLjU4OS41ODljLS4xOTUsMS4yMTgtMS42OTksMi4zMi0uNDUzLDMuNjJoLS40NTJ2LjQ1M2gtLjQ1MmMtLjMyNSwzLS41ODIsNi43NjUtLjQ1MywxMS4zMTVsLS42NzktLjIyNy0uMjI3LjY3OWMtLjQ5MS0uMTEyLS4zMDctLjg5OS0uOTA1LS45MDVsLjIxLS42OHoiPjwvcGF0aD4NCgk8ZyBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCI+DQoJCTxwYXRoIGQ9Im03NC45MzgsMTEyLjU4YzQuNjM0LTEwLjU3NCAxNS41MTgtMTcuMjk1IDE5LjY4OC0yOC4yODgiIHN0cm9rZS13aWR0aD0iMS42NjcyIj48L3BhdGg+DQoJCTxwYXRoIGQ9Im0xLjA4NiwxMTkuNTljLS42MjktMi4zMDcuNjAyLTQuOTYgMy4wMTgtNS41ODIiIHN0cm9rZS13aWR0aD0iMS4xMDQ4Ij48L3BhdGg+DQoJCTxwYXRoIGQ9Im00LjEwNCwxMTQuMDFjLTYuOTUyLTIxLjA4IDMuNjItNDIuMzAxIDIuMjYzLTYzLjY2NyIgc3Ryb2tlLXdpZHRoPSIxLjEyOTYiPjwvcGF0aD4NCgkJPHBhdGggZD0ibS40MTgsMTYuOTQ2Yy4wOTMtNi45NzQgMTAuODU1LTkuNjQ0IDE4LjkxMy0xMS45NjkgMjUuNjgxLTcuNDExIDg0LjYzMS03LjA5OCAxMDUuODcsNC43MDggLjYwNi4zMzcgMi4wNSwxLjE3IDIuODI5LDIuMjc2IiBzdHJva2Utd2lkdGg9IjEuMzUxNyI+PC9wYXRoPg0KCQk8cGF0aCBkPSJtMTMwLjM4LDIyLjk1OSAuNDUyLjkwNSIgc3Ryb2tlLXdpZHRoPSIyLjAyNDEiPjwvcGF0aD4NCgkJPHBhdGggZD0ibTEyNy43MywzMC4wNzJjLjYwNSw0LjIyNyAxLjE2Niw5LjcxNy0xLjUxMywxMy4zOTEiIHN0cm9rZS13aWR0aD0iMS4wNzIxIj48L3BhdGg+DQoJCTxwYXRoIGQ9Im0zLjY1MSwyMDguNzZjLS4wNTItLjEyOC0uMTA0LS4yNTUtLjE1Ni0uMzgyIDExLjA5My0yNS40MDQtMTEuODMtNTQuMTc3LjE1Ni03OS43MzEiIHN0cm9rZS13aWR0aD0iMS4wMDQ4Ij48L3BhdGg+DQoJCTxwYXRoIGQ9Im0xNi4zMjUsMjA3Ljg1Yy4wOTEtMS4yNDUtLjQ4Mi0yLjM5Ni0uNjA0LTMuNjIxIiBzdHJva2Utd2lkdGg9IjEuMzc1MSI+PC9wYXRoPg0KCQk8cGF0aCBkPSJtMy42NTEsMjA4Ljc2YzMuNTQsMS40MDkgNy43MiwxLjczMiAxMS4zMTUuMjI2IiBzdHJva2Utd2lkdGg9Ii45MDA3Ij48L3BhdGg+DQoJCTxwYXRoIGQ9Im0uNDE4LDE2Ljk0NmMyMy42NTYsMTQuNjc0IDcwLjIxMywxNi4zNTIgMTAwLjY5LDkuNzUzIDguODc0LTEuOTIxIDIzLjY3OC00Ljg4NSAyNy42NTgtMTIuNzU5IiBzdHJva2Utd2lkdGg9IjEuNTg5NCI+PC9wYXRoPg0KCQk8cGF0aCBkPSJtMTI5Ljc4LDE5LjExMmMuMzA5LTEuNDguNTY2LTIuOTkzLjAyMS00LjQ2MSIgc3Ryb2tlLXdpZHRoPSIxLjU4OTUiPjwvcGF0aD4NCgkJPHBhdGggZD0ibS40MTgsMTYuOTQ2Yy0xLjIxNiwxLjk2MS41NDMsMy43ODQgMS4xNjQsNS41OTMiIHN0cm9rZS13aWR0aD0iMS42MTQ0Ij48L3BhdGg+DQoJCTxwYXRoIGQ9Im0xLjU4MywyMi41MzljMjUuMTI1LDE0LjA1NiA1NS4wMjYsMTQuMzU2IDgzLjA4NiwxMi4yNjQiIHN0cm9rZS13aWR0aD0iMS43OTgyIj48L3BhdGg+DQoJCTxwYXRoIGQ9Im0xLjU4MywyMi41MzljLTIuMDYyLDIuOTMuNjUsNS44NzUgMS42MTYsOC41NjciIHN0cm9rZS13aWR0aD0iMS40ODE1Ij48L3BhdGg+DQoJCTxwYXRoIGQ9Im0zLjE5OSwzMS4xMDZjNC4yMjMsMS4zODkgOC4wNzYsNC4wNyAxMi4zMTEsNS41NjciIHN0cm9rZS13aWR0aD0iMS4zNjY2Ij48L3BhdGg+DQoJCTxwYXRoIGQ9Im0xMjcuNzMsMzAuMDcyYy43NjItMi4xMzUgMy4yMzctMy41MTggMy4xMDQtNS45ODEiIHN0cm9rZS13aWR0aD0iMS45NzI5Ij48L3BhdGg+DQoJCTxwYXRoIGQ9Im0xMjcuNzMsMzAuMDcyYy00LjA1NywyLjE1Mi04LjA1Myw0LjYxOS0xMi4zNzUsNi4xNDkiIHN0cm9rZS13aWR0aD0iMS40NTQ0Ij48L3BhdGg+DQoJCTxwYXRoIGQ9Im0xNS43MjEsNDMuNTUzYy4yODctLjg4Mi0uMDA0LTEuODM2LjMwMi0yLjcxNiIgc3Ryb2tlLXdpZHRoPSIxLjM5OTEiPjwvcGF0aD4NCgkJPHBhdGggZD0ibTMuMTk5LDMxLjEwNmMtLjQ5Miw0LjE0My0xLjU5Myw5LjQ0OCAxLjM1OCwxMi44OTkiIHN0cm9rZS13aWR0aD0iMS4zNDIxIj48L3BhdGg+DQoJCTxwYXRoIGQ9Im03Ny43MjksMTE2LjQyYy4zMzQtLjkzNy44OTMtMS43NzIgMS4yMDctMi43MTYiIHN0cm9rZS13aWR0aD0iMS41MTQ3Ij48L3BhdGg+DQoJCTxwYXRoIGQ9Im0xMTYuOSwyMDUuNjhjLjY5LTEuMDg0LjU0OC0yLjUwNC45NjYtMy43MTIiIHN0cm9rZS13aWR0aD0iMS41Nzg3Ij48L3BhdGg+DQoJCTxwYXRoIGQ9Im0xMTIuMTMsOTEuOTgyYy44MTctMTQuMzA5IDcuNjkzLTI4LjAyOSA1LjQzMi00Mi41NDUiIHN0cm9rZS13aWR0aD0iMS40NTgiPjwvcGF0aD4NCgkJPHBhdGggZD0ibTE2LjMyNSwxOTcuODljMi4xNzMtMjYuNDY0IDE0LjI5Mi00NS45NTkgMjkuMTgyLTY0LjY4MiAyLjMxLTIuOTA0IDUuMTI5LTUuNjI4IDYuNjgxLTguOTM3IDUuMDUyLTEwLjc2OS0xMy4zMDktMjYuMjMxLTE5LjIyLTM1LjMwOC03Ljg5OC0xMi4xMTktMTQuNTYzLTI3Ljc3NC0xNi42NDMtNDMuMTQ2IiBzdHJva2Utd2lkdGg9IjEuMTc2OCI+PC9wYXRoPg0KCQk8cGF0aCBkPSJtNC4xMDQsMTE0LjAxYy4zNTIuMzYzLjc1Ni45MzUgMS4wMzUsMS40NDQiIHN0cm9rZS13aWR0aD0iMS40NDkxIj48L3BhdGg+DQoJCTxwYXRoIGQ9Im0xMjkuOTMsOTUuNjA0Yy0xLjAxOS0xNS42MTctNy4wOTQtMzAuNzg0LTUuODg0LTQ2LjYxOSIgc3Ryb2tlLXdpZHRoPSIxLjY4NTkiPjwvcGF0aD4NCgkJPHBhdGggZD0ibTExNi41OCwyMDkuODljMy4wOCwxLjY3MSA3LjIxLDEuNDc5IDEwLjE4NC0uMjI2IiBzdHJva2Utd2lkdGg9Ii43MTcyIj48L3BhdGg+DQoJCTxwYXRoIGQ9Im0xMjYuOTEsMjA5LjIxYy0uNTgxLS43MzMtLjkzNi0xLjU3Ni0xLjQxOS0yLjM1NCIgc3Ryb2tlLXdpZHRoPSIxLjQxMDciPjwvcGF0aD4NCgkJPHBhdGggZD0ibTMuNjUxLDIwOC43NmMtLjc1MywyLjk3Mi40OTcsNi4yNjgtLjgzLDkuMTI3IiBzdHJva2Utd2lkdGg9IjEuMDg3MSI+PC9wYXRoPg0KCQk8cGF0aCBkPSJtMi44MjIsMjE3Ljg4Yy0uNjEsNi45NDkgOS44LDEwLjIwMyAxMy4yMDEsNC40NTEiIHN0cm9rZS13aWR0aD0iLjg2MyI+PC9wYXRoPg0KCQk8cGF0aCBkPSJtMTE0Ljk5LDIyMS40M2MxLjU0NSw0LjUyMSA5LjcwNyw0LjU0IDExLjc2OC40NTIiIHN0cm9rZS13aWR0aD0iLjc5NTMiPjwvcGF0aD4NCgkJPHBhdGggZD0ibTExNC4wOSwyMjAuNTJjLTE5LjA0NCwxNC42MzEtNzAuODQ2LDE3LjUzNi05NS45NTQsMCIgc3Ryb2tlLXdpZHRoPSIxLjA5MTEiPjwvcGF0aD4NCgkJPHBhdGggZD0ibTIuODIyLDIxNy44OGMtMS40ODkuNjQ5LTEuMzA5LDIuNjMyLTEuNDM0LDMuOTk4IiBzdHJva2Utd2lkdGg9IjEuOTk4NyI+PC9wYXRoPg0KCQk8cGF0aCBkPSJtMS4zODgsMjIxLjg4YzQuMjUxLDExLjYxNSAyNC42NjcsMTguODM4IDQ1LjI0LDIyLjIxOCAzNy44NTgsNi4yMTkgNjMuODk2LTUuNTgzIDgwLjU4Ny0xNi45MzciIHN0cm9rZS13aWR0aD0iMS4zMDkxIj48L3BhdGg+DQoJCTxwYXRoIGQ9Im0xLjM4OCwyMjEuODhjLTEuODk1LDIuMjA2LjU3LDQuNDk0LjM1Niw2Ljg1NCIgc3Ryb2tlLXdpZHRoPSIxLjEzMzMiPjwvcGF0aD4NCgkJPHBhdGggZD0ibTEuNzQ0LDIyOC43NGMxLjk0MSwxLjEzIDMuMDg3LDMuMjkzIDQuODA0LDQuNzMyIiBzdHJva2Utd2lkdGg9IjEuODU0NiI+PC9wYXRoPg0KCQk8cGF0aCBkPSJtMS43NDQsMjI4Ljc0Yy00Ljg0MSwxMS44NzcgMjIuMzIsMjEuNTYgMjYuMTg3LDIyLjY3MyAxNy44NTksNS4xNDMgNTEuMzc1LDUuNTYyIDc0LjIyOC0uNjY3IDguNzA3LTIuMzc0IDIwLjkyOC02LjY3MyAyNS4xODUtMTMuNDA2IiBzdHJva2Utd2lkdGg9IjEuMTY4OCI+PC9wYXRoPg0KCQk8cGF0aCBkPSJtMzYuNjkyLDE1Mi4xOGM0LjAyOC03Ljg2OSA5LjMzNi0xNS4yODMgMTUuMzg5LTIxLjcyNSIgc3Ryb2tlLXdpZHRoPSIxLjYyNTYiPjwvcGF0aD4NCgk8L2c+DQo8L2c+DQo8L3N2Zz4NCg==">
+	</div>
+</div> <!-- }}} -->
+<div class="polaris"> <!-- {{{ -->
+	<!-- Source: https://pixabay.com/en/compass-rose-north-compass-297741/
+	     Image licensed CC0/public domain. Resized to 80x80, filtered through
+	     pngcrush for size, and made into a data: URL so this can stay
+	     single-file. -->
+	<img alt="Polaris" src="data:image/png;base64,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"/>
+</div> <!-- }}} -->
+<div id="TableOfContents" class="numberedPage"> <!-- {{{ -->
+	<H1>Table of Contents</H1>
+
+	<ul>
+		<li><a href="#Preface" class="pageNumberRef">Preface</a></li>
+		<li><a href="#Murphyjitsu" class="pageNumberRef">Murphy-jitsu</a></li>
+	</ul>
+</div> <!-- }}} -->
+<div id="Preface"> <!-- {{{ -->
+	<div class="numberedPage">
+	<H1>Introduction</H1>
+
+	<P>There are many techniques for thinking about things. Some of them, like conversation strategies, are quick things done in the moment. Others are longer, like lists of things to consider. One especially powerful technique is the timer-worksheet. A timer worksheet is a series of questions, each of which has a duration specified; you set a timer on your phone or watch, and focus on that question exclusively until the timer runs out.</P>
+
+	<P>Timer worksheets are a major part of the Center For Applied Rationality curriculum. They were originally used as a teaching method with small groups: a timer worksheet keeps everyone on the same page (literally), and gives people quiet  time to apply thinking techniques as they're being taught. But it turns out that timer worksheets have significant unanticipated benefits. They free working memory, making multi-step thinking techniques much easier to use. They help with focusing and resisting distractions. Perhaps most important of all, time worksheets lower the activation energy of thinking hard about things that are important.</P>
+
+	<P>The Hourglass Grimoire is a collection of timer worksheets, designed to serve as a daily companion and to make the thinking techniques easy to get started on and to follow through to completion. However, this book is not a full explanation of the techniques, nor is it a good way of learning them if they are unfamiliar. While there is explanatory text, these are only reminders; if you start an exercise from its reminder text, you are likely to miss the essence of it.</P>
+
+	<H1>The Way of the Void</H1>
+
+	<blockquote>
+		"The primary thing when you take a sword in your hands is your intention to cut the enemy, whatever the means. Whenever you parry, hit, spring, strike or touch the enemy's cutting sword, you must cut the enemy in the same movement. It is essential to attain this. If you think only of hitting, springing, striking or touching the enemy, you will not be able actually to cut him. More than anything, you must be thinking of carrying your movement through to cutting him."
+		-- Miyamoto Musashi, The Book of Five Rings
+	</blockquote>
+
+	<blockquote>
+		"Every step of your reasoning must cut through to the correct answer in the same movement. More than anything, you must think of carrying your map through to reflecting the territory. If you fail to achieve a correct answer, it is futile to protest that you acted with propriety."
+		-- Eliezer Yudkowsky, Twelve Virtues of Rationality
+	</blockquote>
+
+	<P>This is a book of techniques: specific mental motions meant to achieve effects. It is important not to perform these motions blindly; you must always maintain sight of what it is you're actually trying to achieve, and not to take the specific techniques as more than reminders and suggestions. This is especially true of the timers themselves. Their purpose is to free your working memory from the task of tracking time spent, to help you maintain forward momentum and to resist the urge to flinch away from hard problems.</P>
+
+	<P>If a timer would have you stop too soon, set another. If a prompt would have you answer the wrong question, reconsider once, then ignore it. If a timer would have you continue longer than necessary, reconsider twice, then ignore it.</P>
+
+	</div><div class="numberedPage">
+	
+	<H1>How To Use This Book</H2>
+
+	<P>TODO: Rewrite this section to reflect not-Google-Docs'ness</P>
+	<P>This book has both digital and print versions. In both cases, you generally want to start from the table of contents, and let it help you choose a situationally appropriate technique. In the digital version, there is a link at the end of the instructions to the corresponding worksheet, which you will follow, clone (in Google Docs, "Make a copy" in the File menu), and edit. In a physical version, there should be several blank copies of the worksheet stored in the same binder. Timing should be done with a phone app or stopwatch with an alarm, so that you can set the timer and then not pay attention to it until it is done.</P>
+
+	<P>To make a physical copy, print one copy of this document and three copies of each other document in https://drive.google.com/drive/folders/0B3ruEhKP1S3PMllIS2V2M1UzSjg. You may wish to decorate the binder to give it salience.</P>
+
+	<H1>Acknowledgements and Copyright</H1>
+
+	<P>This book draws heavily from the course materials from the Center For Applied Rationality's April 2015 workshop. However, this book is not a product of CFAR and it also contains content which is new or substantially altered, and which has not yet (as of v0.1) been seen by CFAR or tested by anyone. It was inspired by the section "Developing a Grimoire," which was presented much less literally than this take on it.</P>
+
+	<P>This book may be distributed to CFAR alumni through the CFAR alumni mailing list, but we ask that you do not distribute it more broadly. It's not suitable for a broader audience, because it makes heavy use of terminology and techniques from the CFAR workshop which it doesn't adequately explain, and presenting it to people without corresponding explanations and other teaching materials would both do them a disservice and create an undue negative impression.</P>
+	</div>
+</div> <!-- }}} -->
+<div class="section" id="Murphyjitsu"> <!-- {{{ -->
+	<div class="sectionTitle numberedPage">
+		<H1>Murphyjitsu</H1>
+		<div class="attribution">Excerpted from the CFAR April 2015 workshop, lightly edited.</div>
+	</div>
+
+	<div class="instructions numberedPage">
+		<P>Murphy's Law says that anything that can go wrong will go wrong, but you can use some of the skills and safeguards you've learned for your Inner Simulator to anticipate and evade these hazards.</P>
+
+		<div class="step">Step 1: Pick a plan, project, or goal</div>
+		<P>What's the next action you would need to take to keep this project/plan moving forward? It should be concrete enough that you can picture yourself doing it, not something vague like "work out more."</P>
+
+		<div class="step">Step 2: Make it specific enough to visualize</div>
+		<P>What's the next action you would need to take to keep this project/plan moving forward? It should be concrete enough that you can picture yourself doing it, not something vague like "work out more."</P>
+
+		<div class="step">Step 3: Check your surprise-o-meter</div>
+		<P>Visualize putting this plan in motion, then ask, how surprised would I be if this plan failed? If you'd be shocked, then you're done! Otherwise, continue to step 4.</P>
+
+		<div class="step">Step 4: Use Pre-Hindsight</div>
+		<P>Your plan didn't work! And it failed at the stage of the next action you wrote in Step 2! What happened?</P>
+
+		<div class="step">Step 5: Use Looking Forward</div>
+		<P>What action would you have had to take to prevent this particular failure mode? Visualize taking this preemptive action and then ask "What comes next?" Have you successfully defused the danger? Did you create a new weak point to patch?</P>
+
+		<div class="step">Step 6: Iterate!</div>
+		<P>Repeat Steps 3-5 several times (sometimes this technique is called "Simulate 17 times, act once"). What else might have gone wrong? What could have prevented it? You're battle-hardening your plan against happenstance and poor habits. Remember that this should be very quick - all "17" iterations should take maybe a few minutes total.</P>
+
+		<button class="beginWorksheet">Begin</button>
+	</div>
+
+	<div class="worksheet">
+		<H1>Murphyjitsu</H1>
+
+		<div class="step">
+			Step 1: Pick a plan/project/goal
+			<div class="duration">[1 minute]</div>
+			<textarea></textarea>
+		</div>
+
+		<div class="step">
+			Step 2: Make it specific enough to visualize
+			<div class="duration">[3 minutes]</div>
+			<textarea></textarea>
+		</div>
+
+		<div class="step">
+			Step 3: Check your surprise-o-meter
+			<div class="duration">[3 minutes]</div>
+			<textarea></textarea>
+		</div>
+
+		<div class="step">
+			Step 4: Use Pre-Hindsight
+			<div class="duration">[3 minutes]</div>
+			<textarea></textarea>
+		</div>
+
+		<div class="step">
+			Step 5: Use Looking Forward
+			<div class="duration">[4 minutes]</div>
+			<textarea></textarea>
+		</div>
+
+		<div class="step">
+			Step 6: Iterate!
+			<div class="duration">[4 minutes]</div>
+			<textarea></textarea>
+		</div>
+	</div>
+</div> <!-- }}} -->
+
+</body>
+</html>
