@@ -163,14 +163,18 @@ P {
 .instructions {
 }
 
-.step {
+.stepDescription {
 	font-weight: bold;
 }
 
 
 @media screen {
-	.worksheet {
+	.extraCopy {
 		display: none;
+	}
+	textarea {
+		width: 100%;
+		height: 250px;
 	}
 }
 
@@ -184,6 +188,9 @@ P {
 	textarea {
 		opacity: 0;
 		height: 2.5in;
+	}
+	.noprint {
+		display: none;
 	}
 }
 
@@ -205,16 +212,40 @@ return new Za.prototype.init(a,b,c,d,e)}m.Tween=Za,Za.prototype={constructor:Za,
 
 var numCopiesOfEachWorksheet = 3;
 
-function beginWorksheet(section, worksheet)
+/// Find all the worksheets (elements with the "worksheet" class), and expand
+/// attributes into rendered elements - ie, make the "duration" attribute on
+/// divs of type ".step" show some text, and add textareas.
+function expandWorksheets()
 {
-	worksheet.show();
+	var worksheets = $(".worksheet");
+	
+	for(var ii=0; ii<worksheets.length; ii++)
+	{
+		var worksheet = worksheets[ii];
+		var steps = $(".step", worksheet);
+		
+		for(var jj=0; jj<steps.length; jj++)
+		{
+			var step = steps[jj];
+			var duration = $(step).attr("duration");
+			if(duration)
+			{
+				var label = $('<span class="duration">['+duration+' minutes]</span>');
+				label.appendTo($(".stepDescription", step));
+				var textarea = $('<textarea></textarea>');
+				textarea.appendTo(step);
+			}
+
+			$(step).attr("index", jj);
+		}
+	}
 }
 
-// Find all the worksheets (elements with the "worksheet" class), and duplicate
-// them so that there are numCopies copies total. Copies other than the first
-// will have the "extraCopy" CSS class. (This is for printing. The extra copies
-// have CSS which makes them appear in printouts, but not in the screen
-// rendering.)
+/// Find all the worksheets (elements with the "worksheet" class), and duplicate
+/// them so that there are numCopies copies total. Copies other than the first
+/// will have the "extraCopy" CSS class. (This is for printing. The extra copies
+/// have CSS which makes them appear in printouts, but not in the screen
+/// rendering.)
 function duplicateWorksheets(numCopies)
 {
 	var worksheets = $(".worksheet");
@@ -223,9 +254,10 @@ function duplicateWorksheets(numCopies)
 	for(var ii=0; ii<worksheets.length; ii++)
 	{
 		var worksheet = worksheets[ii];
+		var worksheetHtml = $(worksheet)[0].outerHTML;
 		for(var jj=0; jj<copiesAdded; jj++)
 		{
-			var copy = $(worksheet.outerHTML);
+			var copy = $(worksheetHtml);
 			copy.addClass("extraCopy");
 			copy.insertAfter(worksheet);
 		}
@@ -248,6 +280,28 @@ function getAnchorNameFor(element)
 	return null;
 }
 
+/// Add page-numbering elements and fill in page-numbering cross references for
+/// print.
+///
+/// Unfortunately, browsers don't really do page numbering. The way they would
+/// do it if they did is standardized in CSS3 ("page-margin boxes"), but none
+/// of the major browsers actually implement it. And even if that was
+/// implemented, it still wouldn't help us make things like a table of contents
+/// with correct page numbers in it.
+/// 
+/// So instead, this is a bit of a hack: there are elements with class
+/// .numberedPage, each such element fills a page which gets auto-numbered, and
+/// pages without corresponding .numberedPage elements have no page numbers on
+/// them and don't increment the page number. In the case of worksheets, this
+/// is intended - those shouldn't be in the numbered sequence, since you're
+/// expected to add and remove copies. Everywhere else, this means you have to
+/// manually paginate by splitting long texts into page-sized chunks.
+///
+/// Cross-references are created by creating an element which looks like this:
+///     <a href="#Section" class="pageNumberRef">Section Description</a>
+/// This function will find the element with the corresponding ID, and insert
+/// the page number of the first numbered page within that element. (On screen,
+/// it will be a normal working anchor link.)
 function addPageNumbers()
 {
 	var numberedPages = $(".numberedPage");
@@ -264,9 +318,9 @@ function addPageNumbers()
 		if(anchorName && !(anchorName in pageNumbers))
 			pageNumbers[anchorName] = pageNumber;
 	}
-
+	
 	var pageNumberRefs = $(".pageNumberRef");
-
+	
 	for(var ii=0; ii<pageNumberRefs.length; ii++)
 	{
 		var linkElement = $(pageNumberRefs[ii]);
@@ -278,14 +332,70 @@ function addPageNumbers()
 	}
 }
 
+function navigateToSubpage(subpage)
+{
+	var subpageElement = $($(subpage).html());
+	$('#CurrentPage').empty();
+	subpageElement.appendTo($('#CurrentPage'));
+	return subpageElement;
+}
+
+function beginWorksheet(section, worksheet)
+{
+	// Focus down to just the section
+	var worksheetDisplay = navigateToSubpage(section);
+
+	// Hide steps other than the first
+	var steps = $(".step", worksheetDisplay);
+	for(var ii=1; ii<steps.length; ii++)
+		$(steps[ii]).hide();
+	
+	// Scroll to the first step
+	// TODO
+	
+	// Add buttons
+	var buttons = makeTimersheetButtons(worksheetDisplay);
+	buttons.appendTo(worksheetDisplay);
+
+	// Start the timer
+	beginWorksheetStep(worksheetDisplay, steps[0]);
+}
+
+function makeTimersheetButtons(worksheet)
+{
+	var buttons = $('<button class="nextStep">Next</button>');
+	$('.nextStep', buttons).click(function(ev) {
+		worksheetNextStep(worksheet);
+	});
+	return buttons;
+}
+
+function beginWorksheetStep(worksheet, step)
+{
+	$(step).show();
+	var timerDurationStr = $(step).attr("duration");
+	if(timerDurationStr && timerDurationStr.length>0) {
+		var timerDuration = parseTimerDuration(timerDurationStr);
+		
+		// TODO
+		$('<div class="timer">'+timerDuration+'</div>').appendTo(step)
+	}
+}
+
+function parseTimerDuration(str)
+{
+	// TODO: Handle units, special cases, etc
+	return parseFloat(str);
+}
+
+function worksheetNextStep(worksheet)
+{
+	// TODO
+}
+
 $(document).ready(function()
 {
-	$("button.beginWorksheet").click(function() {
-		var section = $(".section", $(this).parents());
-		var worksheet = $(".worksheet", section).first();
-		beginWorksheet(section, worksheet);
-	});
-
+	expandWorksheets();
 	duplicateWorksheets(numCopiesOfEachWorksheet);
 	addPageNumbers();
 	
@@ -294,11 +404,22 @@ $(document).ready(function()
 		// TODO: Only pop this up if you have unsaved data
 		return "Are you sure you want to close this page?";
 	}
+
+	navigateToSubpage($('#MainSequence')[0]);
+	
+	$("button.beginWorksheet").click(function() {
+		var section = $(".section", $(this).parents());
+		var worksheet = $(".worksheet", section).first();
+		beginWorksheet(section, worksheet);
+	});
 });
 
 <!-- }}} --></script>
 </head>
 <body>
+<div id="CurrentPage"></div>
+
+<div id="MainSequence" style="display:none">
 
 <div id="TitlePage"> <!-- {{{ -->
 	<H1>The Hourglass Grimoire</H1>
@@ -398,6 +519,13 @@ $(document).ready(function()
 	<P>This book may be distributed to CFAR alumni through the CFAR alumni mailing list, but we ask that you do not distribute it more broadly. It's not suitable for a broader audience, because it makes heavy use of terminology and techniques from the CFAR workshop which it doesn't adequately explain, and presenting it to people without corresponding explanations and other teaching materials would both do them a disservice and create an undue negative impression.</P>
 	</div>
 </div> <!-- }}} -->
+<div id="Configuration" class="noprint"> <!-- {{{ -->
+	<H1>Configuration</H1>
+
+	<ul>
+	<li>Print <input type="number" name="numPrintCopies" value="3"></input> copies of each worksheet</li>
+	</ul>
+</div> <!-- }}} -->
 
 <div class="section" id="Murphyjitsu"> <!-- {{{ -->
 	<div class="sectionTitle numberedPage">
@@ -408,22 +536,22 @@ $(document).ready(function()
 	<div class="instructions numberedPage">
 		<P>Murphy's Law says that anything that can go wrong will go wrong, but you can use some of the skills and safeguards you've learned for your Inner Simulator to anticipate and evade these hazards.</P>
 
-		<div class="step">Step 1: Pick a plan, project, or goal</div>
+		<div class="stepDescription">Step 1: Pick a plan, project, or goal</div>
 		<P>What's the next action you would need to take to keep this project/plan moving forward? It should be concrete enough that you can picture yourself doing it, not something vague like "work out more."</P>
 
-		<div class="step">Step 2: Make it specific enough to visualize</div>
+		<div class="stepDescription">Step 2: Make it specific enough to visualize</div>
 		<P>What's the next action you would need to take to keep this project/plan moving forward? It should be concrete enough that you can picture yourself doing it, not something vague like "work out more."</P>
 
-		<div class="step">Step 3: Check your surprise-o-meter</div>
+		<div class="stepDescription">Step 3: Check your surprise-o-meter</div>
 		<P>Visualize putting this plan in motion, then ask, how surprised would I be if this plan failed? If you'd be shocked, then you're done! Otherwise, continue to step 4.</P>
 
-		<div class="step">Step 4: Use Pre-Hindsight</div>
+		<div class="stepDescription">Step 4: Use Pre-Hindsight</div>
 		<P>Your plan didn't work! And it failed at the stage of the next action you wrote in Step 2! What happened?</P>
 
-		<div class="step">Step 5: Use Looking Forward</div>
+		<div class="stepDescription">Step 5: Use Looking Forward</div>
 		<P>What action would you have had to take to prevent this particular failure mode? Visualize taking this preemptive action and then ask "What comes next?" Have you successfully defused the danger? Did you create a new weak point to patch?</P>
 
-		<div class="step">Step 6: Iterate!</div>
+		<div class="stepDescription">Step 6: Iterate!</div>
 		<P>Repeat Steps 3-5 several times (sometimes this technique is called "Simulate 17 times, act once"). What else might have gone wrong? What could have prevented it? You're battle-hardening your plan against happenstance and poor habits. Remember that this should be very quick - all "17" iterations should take maybe a few minutes total.</P>
 
 		<button class="beginWorksheet">Begin</button>
@@ -432,40 +560,28 @@ $(document).ready(function()
 	<div class="worksheet">
 		<H1>Murphyjitsu</H1>
 
-		<div class="step">
-			Step 1: Pick a plan/project/goal
-			<div class="duration">[1 minute]</div>
-			<textarea></textarea>
+		<div class="step" duration="1">
+			<div class="stepDescription">Step 1: Pick a plan/project/goal</div>
 		</div>
 
-		<div class="step">
-			Step 2: Make it specific enough to visualize
-			<div class="duration">[3 minutes]</div>
-			<textarea></textarea>
+		<div class="step" duration="3">
+			<div class="stepDescription">Step 2: Make it specific enough to visualize</div>
 		</div>
 
-		<div class="step">
-			Step 3: Check your surprise-o-meter
-			<div class="duration">[3 minutes]</div>
-			<textarea></textarea>
+		<div class="step" duration="3">
+			<div class="stepDescription">Step 3: Check your surprise-o-meter</div>
 		</div>
 
-		<div class="step">
-			Step 4: Use Pre-Hindsight
-			<div class="duration">[3 minutes]</div>
-			<textarea></textarea>
+		<div class="step" duration="3">
+			<div class="stepDescription">Step 4: Use Pre-Hindsight</div>
 		</div>
 
-		<div class="step">
-			Step 5: Use Looking Forward
-			<div class="duration">[4 minutes]</div>
-			<textarea></textarea>
+		<div class="step" duration="3">
+			<div class="stepDescription">Step 5: Use Looking Forward</div>
 		</div>
 
-		<div class="step">
-			Step 6: Iterate!
-			<div class="duration">[4 minutes]</div>
-			<textarea></textarea>
+		<div class="step" duration="3">
+			<div class="stepDescription">Step 6: Iterate!</div>
 		</div>
 	</div>
 </div> <!-- }}} -->
@@ -686,5 +802,6 @@ $(document).ready(function()
 	</div>
 </div> <!-- }}} -->
 
+</div>
 </body>
 </html>
