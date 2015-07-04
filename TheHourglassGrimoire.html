@@ -165,10 +165,6 @@ P {
 	text-align: justify;
 }
 
-.stepDescription {
-	font-weight: bold;
-}
-
 .quoteAttribution {
 	display: block;
 	padding-left: 9em;
@@ -180,6 +176,15 @@ P {
 		display: block;
 		margin-right: 60px;
 	}
+
+	.step {
+		margin-top: 10px;
+	}
+}
+
+.step H3 {
+	font-size: inherit;
+	font-weight: bold;
 }
 
 .timerDisplay {
@@ -196,17 +201,20 @@ P {
  *****************************************************************************/
 
 @media screen {
-	.extraCopy {
-		display: none;
-	}
 	textarea {
 		width: 100%;
 		/* height: 250px; */
 	}
-	.worksheet H1 {
+	.worksheet {
 		display: none;
 	}
 	.timerInstructions {
+		display: none;
+	}
+
+	.onlyScreen {
+	}
+	.onlyPrint {
 		display: none;
 	}
 }
@@ -216,6 +224,10 @@ P {
 		page-break-after: always;
 	}
 	textarea {
+		display: none;
+	}
+	.worksheet textarea {
+		display: block;
 		width: 100%;
 		opacity: 0;
 		height: 2in;
@@ -223,12 +235,31 @@ P {
 	.noprint {
 		display: none;
 	}
+	.timerInstructions {
+		padding-left: 8px;
+		font-weight: normal;
+		font-size: 11pt;
+	}
 	.timerDisplay {
 		display: none;
 	}
+	
+	.onlyScreen {
+		display: none;
+	}
+	.onlyPrint {
+	}
 }
 
+/******************************************************************************
+ * Miscellaneous                                                              *
+ *****************************************************************************/
+
 .inactiveSection {
+	display: none;
+}
+
+.placeholder {
 	display: none;
 }
 
@@ -250,48 +281,63 @@ var numCopiesOfEachWorksheet = 3;
 /// divs of type ".step" show some text, and add textareas.
 function expandWorksheets()
 {
-	var worksheets = $(".worksheet");
+	var steps = $(".step");
 	
-	for(var ii=0; ii<worksheets.length; ii++)
+	for(var jj=0; jj<steps.length; jj++)
 	{
-		var worksheet = worksheets[ii];
-		var steps = $(".step", worksheet);
+		var step = steps[jj];
+		var durationStr = $(step).attr("duration");
 		
-		for(var jj=0; jj<steps.length; jj++)
-		(function() {
-		{
-			var step = steps[jj];
-			var durationStr = $(step).attr("duration");
-			$(step).attr("index", jj);
+		var timer = null;
+		if(durationStr) {
+			var durationSecs = parseTimerDuration(durationStr);
+			timer = new Timer(durationSecs, function() {
+				playGongSound();
+			});
+			timer.element.appendTo(step);
 			
-			var timer = null;
-			if(durationStr) {
-				var durationSecs = parseTimerDuration(durationStr);
-				timer = new Timer(durationSecs, function() {
-					playGongSound();
-				});
-				timer.element.appendTo(step);
-				
-				var durationMins = durationSecs/60;
-				var timerInstructions;
-				if(durationMins === 1.0)
-					timerInstructions = "(1 minute)";
-				else if(durationMins > 1.0)
-					timerInstructions = "("+durationMins+" minutes)";
-				else //(durationMins<1)
-					timerInstructions = "("+durationSecs+" seconds)";
-				var printTimerInstructions = $('<span class="timerInstructions">'+timerInstructions+'</span>');
-				printTimerInstructions.appendTo(step);
-			}
-			
-			createExpandingTextarea(function() {
-				if(timer)
-					timer.unpause();
-			}).appendTo(step);
-		}})();
+			var printTimerInstructions = $(
+				'<span class="timerInstructions">'
+					+renderDuration(durationSecs)
+				+'</span>');
+			printTimerInstructions.appendTo($("h3", step));
+		}
+		
+		createExpandingTextarea(function() {
+			if(timer)
+				timer.unpause();
+		}).appendTo(step);
 	}
 }
 
+/// Take a section, and extract the "worksheet" parts from it.
+function extractWorksheet(section)
+{
+	var worksheet = $('<div class="worksheet worksheetCopy"></div>');
+
+	var elementsToCopy = $(".step, .onWorksheet", section);
+	for(var ii=0; ii<elementsToCopy.length; ii++)
+	{
+		var elementCopy = $(elementsToCopy[ii]).clone();
+		$(".instructions", elementCopy).remove();
+		elementCopy .appendTo(worksheet);
+	}
+	
+	return worksheet;
+}
+
+function renderDuration(durationSecs)
+{
+	var durationMins = durationSecs/60;
+	if(durationMins === 1.0)
+		return "(1 minute)";
+	else if(durationMins > 1.0)
+		return "("+durationMins+" minutes)";
+	else //(durationMins<1)
+		return "("+durationSecs+" seconds)";
+}
+
+/// Make a textarea that expands vertically as you type in it.
 function createExpandingTextarea(startTimer)
 {
 	var textarea = $("<textarea></textarea>");
@@ -309,26 +355,24 @@ function createExpandingTextarea(startTimer)
 	return textarea;
 }
 
-
-/// Find all the worksheets (elements with the "worksheet" class), and duplicate
-/// them so that there are numCopies copies total. Copies other than the first
-/// will have the "extraCopy" CSS class. (This is for printing. The extra copies
-/// have CSS which makes them appear in printouts, but not in the screen
-/// rendering.)
+/// For each section, extract the worksheet portion with extractWorksheet and
+/// insert copies of it for print.
 function duplicateWorksheets(numCopies)
 {
-	var worksheets = $(".worksheet");
-	var copiesAdded = numCopies-1;
+	var sections = $(".section");
+
+	// Remove any duplicates that were already added
+	$(".worksheetCopy").remove();
 	
-	for(var ii=0; ii<worksheets.length; ii++)
+	for(var ii=0; ii<sections.length; ii++)
 	{
-		var worksheet = worksheets[ii];
-		var worksheetHtml = $(worksheet)[0].outerHTML;
-		for(var jj=0; jj<copiesAdded; jj++)
+		var section = $(sections[ii]);
+		var worksheet = extractWorksheet(section);
+		
+		for(var jj=0; jj<numCopies; jj++)
 		{
-			var copy = $(worksheetHtml);
-			copy.addClass("extraCopy");
-			copy.insertAfter(worksheet);
+			var copy = worksheet.clone();
+			copy.appendTo(section);
 		}
 	}
 }
@@ -572,10 +616,12 @@ $(document).ready(function()
 		return "Are you sure you want to close this page?";
 	}
 
-	navigateToSubpage($('#MainSequence')[0]);
-	
-	$(".sectionTitle H1").click(function() {
-		navigateToSubpage($(this).parents(".section"));
+	var numWorksheetCopiesConfig = $('[name="numPrintCopies"]');
+	numWorksheetCopiesConfig.on("change", function() {
+		var numCopies = parseInt($('[name="numPrintCopies"]')[0].value);
+		if(!isNaN(numCopies)) {
+			duplicateWorksheets(numCopies);
+		}
 	});
 });
 
@@ -704,57 +750,42 @@ $(document).ready(function()
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop, lightly edited.</div>
 	</div>
 
-	<div class="instructions numberedPage">
-		<P>Murphy's Law says that anything that can go wrong will go wrong, but you can use some of the skills and safeguards you've learned for your Inner Simulator to anticipate and evade these hazards.</P>
-
-		<div class="stepDescription">Step 1: Pick a plan, project, or goal</div>
-		<P>What's the next action you would need to take to keep this project/plan moving forward? It should be concrete enough that you can picture yourself doing it, not something vague like "work out more."</P>
-
-		<div class="stepDescription">Step 2: Make it specific enough to visualize</div>
-		<P>What's the next action you would need to take to keep this project/plan moving forward? It should be concrete enough that you can picture yourself doing it, not something vague like "work out more."</P>
-
-		<div class="stepDescription">Step 3: Check your surprise-o-meter</div>
-		<P>Visualize putting this plan in motion, then ask, how surprised would I be if this plan failed? If you'd be shocked, then you're done! Otherwise, continue to step 4.</P>
-
-		<div class="stepDescription">Step 4: Use Pre-Hindsight</div>
-		<P>Your plan didn't work! And it failed at the stage of the next action you wrote in Step 2! What happened?</P>
-
-		<div class="stepDescription">Step 5: Use Looking Forward</div>
-		<P>What action would you have had to take to prevent this particular failure mode? Visualize taking this preemptive action and then ask "What comes next?" Have you successfully defused the danger? Did you create a new weak point to patch?</P>
-
-		<div class="stepDescription">Step 6: Iterate!</div>
-		<P>Repeat Steps 3-5 several times (sometimes this technique is called "Simulate 17 times, act once"). What else might have gone wrong? What could have prevented it? You're battle-hardening your plan against happenstance and poor habits. Remember that this should be very quick - all "17" iterations should take maybe a few minutes total.</P>
-	</div>
-
-	<div class="worksheet">
-		<H1>Murphyjitsu</H1>
+	<div class="numberedPage">
+		<H1 class="onWorksheet onlyPrint">Murphyjitsu</H1>
+		<P class="instructions">Murphy's Law says that anything that can go wrong will go wrong, but you can use some of the skills and safeguards you've learned for your Inner Simulator to anticipate and evade these hazards.</P>
 
 		<div class="step" duration="1">
-			<span class="stepDescription">1. Pick a plan/project/goal</span>
+			<H3>Step 1: Pick a plan/project/goal</H3>
+			<P class="instructions">What's the next action you would need to take to keep this project/plan moving forward? It should be concrete enough that you can picture yourself doing it, not something vague like "work out more."</P>
 		</div>
 
 		<div class="step" duration="3">
-			<span class="stepDescription">2. Make it specific enough to visualize</span>
+			<H3>Step 2: Make it specific enough to visualize</H3>
+			<P class="instructions">What's the next action you would need to take to keep this project/plan moving forward? It should be concrete enough that you can picture yourself doing it, not something vague like "work out more."</P>
 		</div>
 
 		<div class="step" duration="3">
-			<span class="stepDescription">3. Check your surprise-o-meter</span>
+			<H3>Step 3: Check your surprise-o-meter</H3>
+			<P class="instructions">Visualize putting this plan in motion, then ask, how surprised would I be if this plan failed? If you'd be shocked, then you're done! Otherwise, continue to step 4.</P>
 		</div>
 
 		<div class="step" duration="3">
-			<span class="stepDescription">4. Use Pre-Hindsight</span>
+			<H3>Step 4: Use Pre-Hindsight</H3>
+			<P class="instructions">Your plan didn't work! And it failed at the stage of the next action you wrote in Step 2! What happened?</P>
 		</div>
 
 		<div class="step" duration="3">
-			<span class="stepDescription">5. Use Looking Forward</span>
+			<H3>Step 5: Use Looking Forward</H3>
+			<P class="instructions">What action would you have had to take to prevent this particular failure mode? Visualize taking this preemptive action and then ask "What comes next?" Have you successfully defused the danger? Did you create a new weak point to patch?</P>
 		</div>
 
 		<div class="step" duration="3">
-			<span class="stepDescription">6. Iterate!</span>
+			<H3>Step 6: Iterate!</H3>
+			<P class="instructions">Repeat steps 3-5 several times (sometimes this technique is called "Simulate 17 times, act once"). What else might have gone wrong? What could have prevented it? You're battle-hardening your plan against happenstance and poor habits. Remember that this should be very quick - all "17" iterations should take maybe a few minutes total.</P>
 		</div>
 	</div>
 </div> <!-- }}} -->
-<div class="section" id="MakingHardDecisions"> <!-- {{{ -->
+<div class="section placeholder" id="MakingHardDecisions"> <!-- {{{ -->
 	<div class="sectionTitle numberedPage">
 		<H1>Making Hard Decisions</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop, with modifications.</div>
@@ -768,7 +799,7 @@ $(document).ready(function()
 		<!-- TODO -->
 	</div>
 </div> <!-- }}} -->
-<div class="section" id="GoalFactoring"> <!-- {{{ -->
+<div class="section placeholder" id="GoalFactoring"> <!-- {{{ -->
 	<div class="sectionTitle numberedPage">
 		<H1>Goal Factoring</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
@@ -782,7 +813,7 @@ $(document).ready(function()
 		<!-- TODO -->
 	</div>
 </div> <!-- }}} -->
-<div class="section" id="PropagatingUrges"> <!-- {{{ -->
+<div class="section placeholder" id="PropagatingUrges"> <!-- {{{ -->
 	<div class="sectionTitle numberedPage">
 		<H1>Propagating Urges</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
@@ -796,7 +827,7 @@ $(document).ready(function()
 		<!-- TODO -->
 	</div>
 </div> <!-- }}} -->
-<div class="section" id="FindingAversions"> <!-- {{{ -->
+<div class="section placeholder" id="FindingAversions"> <!-- {{{ -->
 	<div class="sectionTitle numberedPage">
 		<H1>Finding Aversions</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
@@ -810,7 +841,7 @@ $(document).ready(function()
 		<!-- TODO -->
 	</div>
 </div> <!-- }}} -->
-<div class="section" id="AversionFactoring"> <!-- {{{ -->
+<div class="section placeholder" id="AversionFactoring"> <!-- {{{ -->
 	<div class="sectionTitle numberedPage">
 		<H1>Aversion Factoring</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
@@ -824,13 +855,13 @@ $(document).ready(function()
 		<!-- TODO -->
 	</div>
 </div> <!-- }}} -->
-<div class="section" id="Againstness"> <!-- {{{ -->
+<div class="section placeholder" id="Againstness"> <!-- {{{ -->
 	<div class="sectionTitle numberedPage">
 		<H1>Againstness</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
 </div> <!-- }}} -->
-<div class="section" id="FocusedGrit"> <!-- {{{ -->
+<div class="section placeholder" id="FocusedGrit"> <!-- {{{ -->
 	<div class="sectionTitle numberedPage">
 		<H1>Focused Grit</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
@@ -844,7 +875,7 @@ $(document).ready(function()
 		<!-- TODO -->
 	</div>
 </div> <!-- }}} -->
-<div class="section" id="FrameByFrameDebugging"> <!-- {{{ -->
+<div class="section placeholder" id="FrameByFrameDebugging"> <!-- {{{ -->
 	<div class="sectionTitle numberedPage">
 		<H1>Frame-by-Frame Debugging</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
@@ -858,7 +889,7 @@ $(document).ready(function()
 		<!-- TODO -->
 	</div>
 </div> <!-- }}} -->
-<div class="section" id="YourBugsList"> <!-- {{{ -->
+<div class="section placeholder" id="YourBugsList"> <!-- {{{ -->
 	<div class="sectionTitle numberedPage">
 		<H1>Your Bugs List</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
@@ -872,7 +903,7 @@ $(document).ready(function()
 		<!-- TODO -->
 	</div>
 </div> <!-- }}} -->
-<div class="section" id="TriggerActionPlanning"> <!-- {{{ -->
+<div class="section placeholder" id="TriggerActionPlanning"> <!-- {{{ -->
 	<div class="sectionTitle numberedPage">
 		<H1>Trigger-Action Planning</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
@@ -886,7 +917,7 @@ $(document).ready(function()
 		<!-- TODO -->
 	</div>
 </div> <!-- }}} -->
-<div class="section" id="Systemization"> <!-- {{{ -->
+<div class="section placeholder" id="Systemization"> <!-- {{{ -->
 	<div class="sectionTitle numberedPage">
 		<H1>Systemization</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
@@ -900,7 +931,7 @@ $(document).ready(function()
 		<!-- TODO -->
 	</div>
 </div> <!-- }}} -->
-<div class="section" id="ComfortZoneExpansion"> <!-- {{{ -->
+<div class="section placeholder" id="ComfortZoneExpansion"> <!-- {{{ -->
 	<div class="sectionTitle numberedPage">
 		<H1>Comfort Zone Expansion</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
@@ -916,19 +947,58 @@ $(document).ready(function()
 </div> <!-- }}} -->
 <div class="section" id="HammingPrompts"> <!-- {{{ -->
 	<div class="sectionTitle numberedPage">
-		<H1>Hamming Prompts</H1>
+		<H1 class="onWorksheet">Hamming Prompts</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
 
-	<div class="instructions numberedPage">
-		<!-- TODO -->
-	</div>
+	<div class="numberedPage">
+		<H1>Hamming Prompts</H1>
 
-	<div class="worksheet">
-		<!-- TODO -->
+		<div class="step" duration="4">
+			<H3>Step 0. Initial thoughts</H3>
+			<P class="instructions">Did anything come up already? Is anything staring you in the face right now? Now that you have the idea of a "Hamming question" in mind: is anything obvious as your most important problem?</P>
+		</div>
+
+		<div class="step" duration="4">
+			<H3>Step 1. Rate-limiting step</H3>
+			<P class="instructions">The speed of a chemical reaction is determined by the speed of the slowest step - the rate-limiting step. What is yours? Or: what's your bottleneck? Is there a problem where solving it would be the equivalent of "wishing for more wishes?"</P>
+		</div>
+
+		<div class="step" duration="4">
+			<H3>Step 2. What are you not allowed to care about?</H3>
+			<P class="instructions">Or: Is there some good outcome that you generally don't think about because it's too big to picture? Or too impossible?</P>
+		</div>
+
+		<div class="step" duration="4">
+			<H3>Step 3. Genre-savviness</H3>
+			<P class="instructions">When you're reading a novel, sometimes it seems like the book is dragging/stuck because there is an obvious thing that the character needs to do next in order to advance the plot (e.g., clearly she needs to go talk to the magician - can't she just do it already?). If your life is a novel: what is that obvious next thing?</P>
+		</div>
+
+		<div class="step" duration="5">
+			<H3>Step 4. What are you already pursuing, badly, in a convoluted/distorted way?</H3>
+			<P class="instructions">Pica is a medical condition in which people who are iron deficient (for example) eat things like ice cubes, because the signal to eat things with iron is getting distorted into an urge to eat things which share superficial properties with iron. So: what is everything you're doing a pica for?</P>
+		</div>
+
+		<div class="step" duration="5">
+			<H3>Step 5. Magnitude of your problems</H3>
+			<P class="instructions">Which problems in your life have effects that are the largest order of magnitude? You may want to think separately about the effects on you and the effects on the world. For example, for effects on you: If you think about the gap between your current life and a better version of your life, which problem could you solve to cross the largest fraction of that gap? Or, for effects on the world: If you think about the size of your positive impact on the world, which problem could you solve to increase that impact by the largest amount?</P>
+		</div>
+
+		<div class="step" duration="5">
+			<H3>Step 6. Focusing</H3>
+			<P class="instructions">Say aloud: "My life is fine." (Or: "I feel all fine and good about my life.")<BR>
+			If you're like most people, something will catch in your throat. Write it down.<BR>
+			Then imagine putting that thing next to you on the park bench, and go again: "Apart from Project Eggplant, my life is fine in all respects." See what catches now.<BR>
+			For most people, something will catch maybe 3-5 times, and then the sentence will ring true. ("Apart from A, B, C, and D, my life really is fine.")</P>
+		</div>
+
+		<div class="step" duration="5">
+			<H3>Step 7. Final go</H3>
+			<P class="instructions">So, having now gone through all of that: What feels most alive? What is the most important problem, for you right now?</P>
+		</div>
 	</div>
 </div> <!-- }}} -->
-<div class="section" id="OfflineHabitTraining"> <!-- {{{ -->
+<div class="section placeholder" id="OfflineHabitTraining"> <!-- {{{ -->
 	<div class="sectionTitle numberedPage">
 		<H1>Offline Habit Training</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
@@ -942,7 +1012,7 @@ $(document).ready(function()
 		<!-- TODO -->
 	</div>
 </div> <!-- }}} -->
-<div class="section" id="ValueOfInformation"> <!-- {{{ -->
+<div class="section placeholder" id="ValueOfInformation"> <!-- {{{ -->
 	<div class="sectionTitle numberedPage">
 		<H1>Value of Information</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
@@ -962,42 +1032,55 @@ $(document).ready(function()
 		<div class="attribution">By James Babcock.</div>
 	</div>
 
-	<div class="instructions numberedPage">
-		<!-- TODO -->
-	</div>
-
-	<div class="worksheet">
-		<H1>Making Large Updates</H1>
+	<div class="numberedPage">
+		<H1 class="onWorksheet onlyPrint">Making Large Updates</H1>
 		
 		<div class="step" duration="2">
-			<span class="stepDescription">1. Clarify.</span> How, exactly, have your beliefs changed? Write down what you used to believe, what you believe now, and how these differ.
+			<span class="stepDescription">
+				<H3>1. Clarify.</H3>
+				<P class="instructions">How, exactly, have your beliefs changed? Write down what you used to believe, what you believe now, and how these differ.</P>
+			</span>
 		</div>
 
 		<div class="step" duration="5">
-			<span class="stepDescription">2. Check.</span> Are you confident that this change is correct?
+			<span class="stepDescription">
+				<H3>2. Check.</H3>
+				<P class="instructions">Are you confident that this change is correct?</P>
+			</span>
 		</div>
 
-		<P class="midSheetInstructions">If yes, continue.<br>
-		If no, do not continue with this sheet. Instead, you may which to use Focused Grit or another technique to determine whether the update is correct.</P>
+		<div class="midSheetInstructions">If yes, continue.<br>
+		If no, do not continue with this sheet. Instead, you may which to use Focused Grit or another technique to determine whether the update is correct.</div>
 
 		<div class="step" duration="5">
-			<span class="stepDescription">3. Trace the change.</span> Was there a specific observation that inspired the change? Was this the result of thinking seriously about something for the first time?
-		</div>
-
-		<div class="step" duration="5">
-			<span class="stepDescription">4. Trace the old belief.</span> How long did you hold the old belief, and what caused you to do so? Does this suggest a reference class in which more false beliefs might be found?
-		</div>
-
-		<div class="step" duration="5">
-			<span class="stepDescription">5. Write implications of the old belief.</span> You will want to reevaluate these later, but you should avoid rushing too quickly to the conclusion that they're untrue.
-		</div>
-
-		<div class="step" duration="5">
-			<span class="stepDescription">6. Write implications of the new belief.</span>
+			<span class="stepDescription">
+				<H3>3. Trace the change.</H3>
+				<P class="instructions">Was there a specific observation that inspired the change? Was this the result of thinking seriously about something for the first time?</P>
+			</span>
 		</div>
 
 		<div class="step" duration="5">
-			<span class="stepDescription">7. Check for confusion.</span> Do you notice anything which still seems to not make sense?
+			<span class="stepDescription">
+				<H3>4. Trace the old belief.</H3>
+				<P class="instructions">How long did you hold the old belief, and what caused you to do so? Does this suggest a reference class in which more false beliefs might be found?</P>
+			</span>
+		</div>
+
+		<div class="step" duration="5">
+			<H3>5. Write implications of the old belief.</H3>
+			<P class="instructions">You will want to reevaluate these later, but you should avoid rushing too quickly to the conclusion that they're untrue.</P>
+		</div>
+
+		<div class="step" duration="5">
+			<H3>6. Write implications of the new belief.</H3>
+			<P class="instructions">What are some consequences your now beliefs have? Given what you know now, are any longstanding mysteries now ready to resolve?</P>
+		</div>
+
+		<div class="step" duration="5">
+			<span class="stepDescription">
+				<B>7. Check for confusion.</B>
+				<P class="instructions">Do you notice anything which still seems to not make sense? Are there new questions that now require thought?</P>
+			</span>
 		</div>
 	</div>
 </div> <!-- }}} -->
