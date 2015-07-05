@@ -16,6 +16,7 @@ more metadata, including copyright information and terms of redistribution.
 <html>
 <head>
 <title>The Hourglass Grimoire</title>
+<meta charset="UTF-8">
 
 <!-- CSS styles {{{ --><style>
 /******************************************************************************
@@ -75,6 +76,11 @@ more metadata, including copyright information and terms of redistribution.
 	}
 }
 
+a.tocPlaceholder {
+	text-decoration: none;
+	color: black;
+}
+
 /******************************************************************************
  * Section title pages                                                        *
  *****************************************************************************/
@@ -90,7 +96,7 @@ more metadata, including copyright information and terms of redistribution.
 
 @media print {
 	.section {
-		page-break-before: right;
+		page-break-after: always;
 	}
 	.sectionTitle h1 {
 		padding-top: 3in;
@@ -183,7 +189,7 @@ P {
 	}
 }
 
-.step H3 {
+H3 {
 	font-size: inherit;
 	font-weight: bold;
 }
@@ -227,28 +233,19 @@ ul {
 	.timerInstructions {
 		display: none;
 	}
-
-	.onlyScreen {
-	}
-	.onlyPrint {
-		display: none;
-	}
 }
 
 @media print {
-	.worksheet {
+	.worksheet, .worksheetPage {
 		page-break-after: always;
 	}
 	textarea {
 		display: none;
 	}
 	.worksheet textarea {
-		display: block;
-		width: 100%;
-		opacity: 0;
-		height: 2in;
+		display: none;
 	}
-	.noprint {
+	.noPrint {
 		display: none;
 	}
 	.timerInstructions {
@@ -259,18 +256,30 @@ ul {
 	.timerDisplay {
 		display: none;
 	}
-	
-	.onlyScreen {
-		display: none;
-	}
-	.onlyPrint {
-	}
 }
 
 /******************************************************************************
  * Multi-Rendering                                                            *
+ *                                                                            *
+ * Each section is rendered three ways: worksheet, instructions, and mixed.   *
+ * Mixed view is used on screen. Instructions view is printed once, with      *
+ * numbering. Worksheet view is printed three times, without numbering.       *
  *****************************************************************************/
-.worksheet .onlyWorksheet {
+
+/* Control which views appear on screen and in print */
+@media screen {
+	.instructionsRender {
+		display: none;
+	}
+	.worksheetRender {
+		display: none;
+	}
+}
+
+@media print {
+	.mixedRender {
+		display: none;
+	}
 }
 
 /******************************************************************************
@@ -298,22 +307,47 @@ return new Za.prototype.init(a,b,c,d,e)}m.Tween=Za,Za.prototype={constructor:Za,
 
 var numCopiesOfEachWorksheet = 3;
 
-/// Find all the worksheets, and expand attributes into rendered elements - ie,
-/// make the "duration" attribute on divs of type ".step" show some text, and
-/// add textareas.
-function expandWorksheets()
+function makeInstructionAndWorksheetRenderings()
+{
+	var sections = $(".section");
+
+	for(var ii=0; ii<sections.length; ii++)
+	{
+		var original = $(sections[ii]);
+		var instructionsRender = original.clone();
+		var worksheetRender = original.clone();
+		
+		original.addClass("mixedRender");
+		instructionsRender.addClass("instructionsRender");
+		worksheetRender.addClass("worksheetRender");
+		
+		instructionsRender.insertAfter(original);
+
+		$(".onlyInstructions, .onlyWorksheet, .onlyPrint", original).remove();
+		$(".notInstructions, .onlyWorksheet, .onlyMixed, .instructionsRender, .noPrint", instructionsRender).remove();
+		$(".instructions, .onlyInstructions, .onlyMixed, .noPrint", worksheetRender).remove();
+
+		var laidOutWorksheet = doWorksheetLayout(worksheetRender);
+		laidOutWorksheet.insertAfter(instructionsRender);
+	}
+}
+
+/// Find elements with the "step" class, and give them timers and textareas.
+function addTimersAndTextareas()
 {
 	var steps = $(".step");
 	
-	for(var jj=0; jj<steps.length; jj++)
+	for(var ii=0; ii<steps.length; ii++)
+	(function() {
 	{
-		var step = steps[jj];
+		var step = steps[ii];
 		var durationStr = $(step).attr("duration");
 		
-		var timer = null;
+		var textarea = createExpandingTextarea();
+		
 		if(durationStr) {
 			var durationSecs = parseTimerDuration(durationStr);
-			timer = new Timer(durationSecs, function() {
+			var timer = new Timer(durationSecs, function() {
 				playGongSound();
 			});
 			timer.element.appendTo(step);
@@ -322,82 +356,158 @@ function expandWorksheets()
 				'<span class="timerInstructions">'
 					+renderDuration(durationSecs)
 				+'</span>');
-			printTimerInstructions.appendTo($("h3", step));
+			
+			// If the step contains an H3, put the print version of the timer
+			// inside it. Otherwise, backtrack until we find an H3, and put it
+			// there.
+			var instructionsTarget = null;
+			if($("h3", step).length>0) {
+				instructionsTarget = $("h3", step);
+			} else {
+				// HACK
+				var candidates = $("h3, .step");
+				for(var jj=1; jj<candidates.length; jj++) {
+					if(candidates[jj] == step) {
+						instructionsTarget = candidates[jj-1];
+						break;
+					}
+				}
+			}
+			printTimerInstructions.appendTo(instructionsTarget);
+			
+			$(textarea).on("focus", function() {
+				timer.unpause();
+			});
 		}
 		
-		createExpandingTextarea(function() {
-			if(timer)
-				timer.unpause();
-		}).appendTo(step);
-	}
+		textarea.appendTo(step);
+	}})();
 }
 
-/// Take a section, and extract the "worksheet" parts from it.
-function extractWorksheet(section)
-{
-	var worksheet = $('<div class="worksheet worksheetCopy"></div>');
-
-	var elementsToCopy = $(".step, .onWorksheet", section);
-	for(var ii=0; ii<elementsToCopy.length; ii++)
-	{
-		var elementCopy = $(elementsToCopy[ii]).clone();
-		$(".instructions", elementCopy).remove();
-		elementCopy .appendTo(worksheet);
-	}
-	
-	return worksheet;
-}
-
-function renderDuration(durationSecs)
-{
-	var durationMins = durationSecs/60;
-	if(durationMins === 1.0)
-		return "(1 minute)";
-	else if(durationMins > 1.0)
-		return "("+durationMins+" minutes)";
-	else //(durationMins<1)
-		return "("+durationSecs+" seconds)";
-}
-
-/// Make a textarea that expands vertically as you type in it.
-function createExpandingTextarea(startTimer)
-{
-	var textarea = $("<textarea></textarea>");
-	var heightLimit = 200;
-
-	textarea.on('input', function() {
-		$(this).css({ height: "" });
-		$(this).css({ height: Math.min(this.scrollHeight, heightLimit) + "px" });
-	});
-
-	textarea.on('focus', function() {
-		startTimer();
-	});
-
-	return textarea;
-}
-
-/// For each section, extract the worksheet portion with extractWorksheet and
-/// insert copies of it for print.
+/// For each .worksheetRender element, make it so that it is the first of
+/// numCopies identical elements (all but the first of which with the
+/// "worksheetCopy" class).
 function duplicateWorksheets(numCopies)
 {
-	var sections = $(".section");
+	var worksheets = $(".worksheetRender");
 
 	// Remove any duplicates that were already added
 	$(".worksheetCopy").remove();
 	
-	for(var ii=0; ii<sections.length; ii++)
+	for(var ii=0; ii<worksheets.length; ii++)
 	{
-		var section = $(sections[ii]);
-		var worksheet = extractWorksheet(section);
+		var worksheet = $(worksheets[ii]);
 		
-		for(var jj=0; jj<numCopies; jj++)
+		for(var jj=0; jj<numCopies-1; jj++)
 		{
 			var copy = worksheet.clone();
-			copy.appendTo(section);
+			copy.addClass("worksheetCopy");
+			copy.insertAfter(worksheet);
 		}
 	}
 }
+
+/// Adjust the sizes of the whitespace between questions on a worksheet, to
+/// nicely fill pages in print layout.
+function doWorksheetLayout(worksheet)
+{
+	// Unwrap numberedPage divs (which apply to the instructions render, but not
+	// to the worksheet render).
+	var numberedPages = $(".numberedPage", worksheet);
+	for(var ii=0; ii<numberedPages.length; ii++)
+	{
+		var numberedPage = $(numberedPages[ii]);
+		numberedPage.replaceWith(numberedPage.contents());
+	}
+	
+	var pages = $('<div></div>');
+	pages.addClass(worksheet.attr("class"));
+	var currentPage = $('<div class="worksheetPage"></div>');
+
+	var worksheetChildElements = worksheet.children();
+	for(var ii=0; ii<worksheetChildElements.length; ii++)
+	{
+		var element = $(worksheetChildElements[ii]);
+		if(element.hasClass("worksheetPageBreak")) {
+			var page = doWorksheetLayoutForPage(currentPage);
+			page.appendTo(pages);
+			currentPage = $('<div class="worksheetPage"></div>');
+		} else {
+			element.clone().appendTo(currentPage);
+		}
+	}
+
+	if(currentPage.children().length > 0) {
+		var page = doWorksheetLayoutForPage(currentPage);
+		page.appendTo(pages);
+	}
+
+	return pages;
+}
+
+/// Set sizes for one worksheet page. Elements with the "weight" attribute are
+/// automatically sized; elements without it are not.
+function doWorksheetLayoutForPage(page)
+{
+	var elements = page.children();
+	var totalWeight = 0;
+	var totalFixedHeight = 0;
+	
+	// Compute the total height of fixed-size elements and total weight
+	for(var ii=0; ii<elements.length; ii++)
+	{
+		var element = $(elements[ii]);
+		
+		var weight = element.attr("weight");
+		if(weight && weight>0) { // Has weight?
+			totalWeight += parseFloat(weight);
+		} else { // Otherwise fixed-size
+			var heightInInches = estimateElementPrintHeightInches(element);
+			totalFixedHeight += heightInInches;
+		}
+	}
+
+	// Amount of space to auto-allocate from. This is letter size minus 1 inch
+	// top and bottom margins minus half an inch fudge.
+	var pageHeightInches = 8.2
+	
+	var spaceToAllocate = pageHeightInches - totalFixedHeight;
+	var scaleFactor = spaceToAllocate / totalWeight;
+	
+	for(var ii=0; ii<elements.length; ii++)
+	{
+		var element = $(elements[ii]);
+		
+		var weight = element.attr("weight");
+		if(weight && weight>0) {
+			var heightInInches = parseFloat(weight) * scaleFactor;
+			element.css({
+				height: heightInInches+"in"
+			});
+		}
+	}
+	
+	return page.clone();
+}
+
+function estimateElementPrintHeightInches(element)
+{
+	var sizeTestContainer = $('<div style="position: absolute; left: -10000; width:7.5in"></div>');
+	sizeTestContainer.appendTo('body');
+	
+	var copy = element.clone();
+	copy.appendTo(sizeTestContainer);
+	var heightInPx = copy.height();
+	
+	var dpiMeasurer = $('<div style="height:1in"></div>');
+	dpiMeasurer.appendTo(sizeTestContainer);
+	var dpi = dpiMeasurer.height();
+	var heightInInches = heightInPx/dpi;
+
+	sizeTestContainer.remove();
+	return heightInInches;
+}
+
 
 /// Returns an anchor that would be used to link to the given element: either
 /// the element's ID, or the ID of the closest element in the parent-chain,
@@ -473,6 +583,14 @@ function addPageNumbers()
 	}
 }
 
+/// Get the page number of the page the element appears on, as a string for
+/// display. (Actually, a bit more subtle than that. If this *contains* a
+/// numberedPage element, returns the first contained numberedPage element's
+/// page number. Otherwise if it's contained in a numberedPage element, returns
+/// that element's page number. Otherwise returns the string "?".
+///
+/// This will only work after addPageNumbers() has marked elements with their
+/// page numbers.
 function getPageNumberFor(element)
 {
 	var numberedPagesInside = $(".numberedPage", element);
@@ -489,6 +607,7 @@ function getPageNumberFor(element)
 
 	return "?";
 }
+
 
 /// Modify the page so that only the given element (subpage) is visible, by
 /// adding the .inactiveSection class to every element that is a sibling of an
@@ -521,6 +640,7 @@ function parseTimerDuration(str)
 	var durationSecs = durationMins*60;
 	return durationSecs;
 }
+
 
 function Timer(durationSecs, onFinish)
 {
@@ -616,7 +736,8 @@ Timer.prototype.tick = function()
 
 Timer.prototype.updateText = function()
 {
-	this.element.text(this.labelFromSecondsRemaining(this.getRemainingSeconds()));
+	var newText = this.labelFromSecondsRemaining(this.getRemainingSeconds());
+	this.element.text(newText);
 }
 
 Timer.prototype.labelFromSecondsRemaining = function(timeRemainingSecs)
@@ -627,6 +748,7 @@ Timer.prototype.labelFromSecondsRemaining = function(timeRemainingSecs)
 	var secsStr = (secs<10) ? "0"+secs : ""+secs;
 	return mins+':'+secsStr;
 }
+
 
 /// Play a sound, to indicate that a timer has finished.
 function playGongSound()
@@ -644,6 +766,32 @@ function getVersionString()
 	return $('#versionNumber').text();
 }
 
+function renderDuration(durationSecs)
+{
+	var durationMins = durationSecs/60;
+	if(durationMins === 1.0)
+		return "(1 minute)";
+	else if(durationMins > 1.0)
+		return "("+durationMins+" minutes)";
+	else //(durationMins<1)
+		return "("+durationSecs+" seconds)";
+}
+
+/// Make a textarea that expands vertically as you type in it.
+function createExpandingTextarea()
+{
+	var textarea = $("<textarea></textarea>");
+	var heightLimit = 200;
+
+	textarea.on('input', function() {
+		$(this).css({ height: "" });
+		$(this).css({ height: Math.min(this.scrollHeight, heightLimit) + "px" });
+	});
+
+	return textarea;
+}
+
+
 $(document).ready(function()
 {
 	console.log(
@@ -651,9 +799,12 @@ $(document).ready(function()
 		getVersionString()+"\n"+
 		"By James Babcock and Vincent Luczlow"
 	);
-	expandWorksheets();
-	duplicateWorksheets(numCopiesOfEachWorksheet);
+	
+	makeInstructionAndWorksheetRenderings();
 	addPageNumbers();
+	addTimersAndTextareas();
+	
+	duplicateWorksheets(numCopiesOfEachWorksheet);
 	
 	window.onbeforeunload = function(event)
 	{
@@ -719,32 +870,32 @@ $(document).ready(function()
 	<H4>Decision Making</H4>
 	<ul>
 		<li><a href="#Murphyjitsu" class="pageNumberRef">Murphy-jitsu</a></li>
-		<li><a href="#MakingHardDecisions" class="pageNumberRef">Making Hard Decisions</a></li>
+		<li><a href="#MakingHardDecisions" class="tocPlaceholder pageNumberRef">Making Hard Decisions</a></li>
 	</ul>
 
 	<H4>Motivation</H4>
 	<ul>
-		<li><a href="#GoalFactoring" class="pageNumberRef">Goal Factoring</a></li>
+		<li><a href="#GoalFactoring" class="tocPlaceholder pageNumberRef">Goal Factoring</a></li>
 		<li><a href="#PropagatingUrges" class="pageNumberRef">Propagating Urges</a></li>
-		<li><a href="#FindingAversions" class="pageNumberRef">Finding Aversions</a></li>
-		<li><a href="#AversionFactoring" class="pageNumberRef">Aversion Factoring</a></li>
-		<li><a href="#Againstness" class="pageNumberRef">Againstness</a></li>
+		<li><a href="#FindingAversions" class="tocPlaceholder pageNumberRef">Finding Aversions</a></li>
+		<li><a href="#AversionFactoring" class="tocPlaceholder pageNumberRef">Aversion Factoring</a></li>
+		<li><a href="#Againstness" class="tocPlaceholder pageNumberRef">Againstness</a></li>
 	</ul>
 
 	<H4>General Self-Improvement</H4>
 	<ul>
-		<li><a href="#YourBugsList" class="pageNumberRef">Your Bugs List</a></li>
-		<li><a href="#TriggerActionPlanning" class="pageNumberRef">Trigger-Action Planning</a></li>
-		<li><a href="#Systemization" class="pageNumberRef">Systemization</a></li>
-		<li><a href="#ComfortZoneExpansion" class="pageNumberRef">Comfort Zone Expansion</a></li>
+		<li><a href="#YourBugsList" class="tocPlaceholder pageNumberRef">Your Bugs List</a></li>
+		<li><a href="#TriggerActionPlanning" class="tocPlaceholder pageNumberRef">Trigger-Action Planning</a></li>
+		<li><a href="#Systemization" class="tocPlaceholder pageNumberRef">Systemization</a></li>
+		<li><a href="#ComfortZoneExpansion" class="tocPlaceholder pageNumberRef">Comfort Zone Expansion</a></li>
 		<li><a href="#HammingPrompts" class="pageNumberRef">Hamming Prompts</a></li>
-		<li><a href="#OfflineHabitTraining" class="pageNumberRef">Offline Habit Training</a></li>
+		<li><a href="#OfflineHabitTraining" class="tocPlaceholder pageNumberRef">Offline Habit Training</a></li>
 	</ul>
 	<H4>Miscellaneous</H4>
 	<ul>
-		<li><a href="#FrameByFrameDebugging" class="pageNumberRef">Frame-by-Frame Debugging</a></li>
-		<li><a href="#FocusedGrit" class="pageNumberRef">Focused Grit</a></li>
-		<li><a href="#ValueOfInformation" class="pageNumberRef">Value of Information</a></li>
+		<li><a href="#FrameByFrameDebugging" class="tocPlaceholder pageNumberRef">Frame-by-Frame Debugging</a></li>
+		<li><a href="#FocusedGrit" class="tocPlaceholder pageNumberRef">Focused Grit</a></li>
+		<li><a href="#ValueOfInformation" class="tocPlaceholder pageNumberRef">Value of Information</a></li>
 		<li><a href="#MakingLargeUpdates" class="pageNumberRef">Making Large Updates</a></li>
 	</ul>
 
@@ -806,7 +957,7 @@ $(document).ready(function()
 	<P>The sound effect played when timers finish is <a href="http://soundbible.com/1531-Temple-Bell.html">Temple Bell</a> by Mike Koenig, <a href="https://creativecommons.org/licenses/by/3.0/us/">CC BY 3.0</a>.
 	</div>
 </div> <!-- }}} -->
-<div id="Configuration" class="noprint"> <!-- {{{ -->
+<div id="Configuration" class="noPrint"> <!-- {{{ -->
 	<H1>Configuration</H1>
 
 	<ul>
@@ -815,48 +966,59 @@ $(document).ready(function()
 </div> <!-- }}} -->
 
 <div class="section" id="Murphyjitsu"> <!-- {{{ -->
-	<div class="sectionTitle numberedPage">
+	<div class="instructions sectionTitle numberedPage">
 		<H1>Murphyjitsu</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop, lightly edited.</div>
 	</div>
 
 	<div class="numberedPage">
-		<H1 class="onWorksheet onlyPrint">Murphyjitsu</H1>
+		<H1 class="onlyPrint">Murphyjitsu</H1>
+		
 		<P class="instructions">Murphy's Law says that anything that can go wrong will go wrong, but you can use some of the skills and safeguards you've learned for your Inner Simulator to anticipate and evade these hazards.</P>
 
-		<div class="step" duration="1">
+		<div class="step" weight="1" duration="1">
 			<H3>Step 1: Pick a plan/project/goal</H3>
 			<P class="instructions">What's the next action you would need to take to keep this project/plan moving forward? It should be concrete enough that you can picture yourself doing it, not something vague like "work out more."</P>
 		</div>
 
-		<div class="step" duration="3">
+		<div class="step" weight="1" duration="3">
 			<H3>Step 2: Make it specific enough to visualize</H3>
 			<P class="instructions">What's the next action you would need to take to keep this project/plan moving forward? It should be concrete enough that you can picture yourself doing it, not something vague like "work out more."</P>
 		</div>
 
-		<div class="step" duration="3">
+		<div class="step" weight="1" duration="3">
 			<H3>Step 3: Check your surprise-o-meter</H3>
 			<P class="instructions">Visualize putting this plan in motion, then ask, how surprised would I be if this plan failed? If you'd be shocked, then you're done! Otherwise, continue to step 4.</P>
 		</div>
 
-		<div class="step" duration="3">
+		<div class="step" weight="1" duration="3">
 			<H3>Step 4: Use Pre-Hindsight</H3>
 			<P class="instructions">Your plan didn't work! And it failed at the stage of the next action you wrote in Step 2! What happened?</P>
 		</div>
 
-		<div class="step" duration="3">
+		<div class="step" weight="1" duration="3">
 			<H3>Step 5: Use Looking Forward</H3>
 			<P class="instructions">What action would you have had to take to prevent this particular failure mode? Visualize taking this preemptive action and then ask "What comes next?" Have you successfully defused the danger? Did you create a new weak point to patch?</P>
 		</div>
 
-		<div class="step" duration="3">
+		<P class="onlyWorksheet midSheetInstructions onlyPrint">Continued on back</P>
+		
+		<div class="worksheetPageBreak"></div>
+
+		<P class="onlyWorksheet onlyPrint"><B>
+			Step 3: Check your surprise-o-meter<br>
+			Step 4: Use Pre-Hindsight<br>
+			Step 5: Use Looking Forward<br>
+		</B></P>
+
+		<div class="step" weight="1" duration="3">
 			<H3>Step 6: Iterate!</H3>
 			<P class="instructions">Repeat steps 3-5 several times (sometimes this technique is called "Simulate 17 times, act once"). What else might have gone wrong? What could have prevented it? You're battle-hardening your plan against happenstance and poor habits. Remember that this should be very quick - all "17" iterations should take maybe a few minutes total.</P>
 		</div>
 	</div>
 </div> <!-- }}} -->
 <div class="section placeholder" id="MakingHardDecisions"> <!-- {{{ -->
-	<div class="sectionTitle numberedPage">
+	<div class="instructions sectionTitle numberedPage">
 		<H1>Making Hard Decisions</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop, with modifications.</div>
 	</div>
@@ -866,7 +1028,7 @@ $(document).ready(function()
 	</div>
 </div> <!-- }}} -->
 <div class="section placeholder" id="GoalFactoring"> <!-- {{{ -->
-	<div class="sectionTitle numberedPage">
+	<div class="instructions sectionTitle numberedPage">
 		<H1>Goal Factoring</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
@@ -875,48 +1037,170 @@ $(document).ready(function()
 		<!-- TODO -->
 	</div>
 </div> <!-- }}} -->
-<div class="section placeholder" id="PropagatingUrges"> <!-- {{{ -->
-	<div class="sectionTitle numberedPage">
+<div class="section" id="PropagatingUrges"> <!-- {{{ -->
+	<div class="instructions sectionTitle numberedPage">
 		<H1>Propagating Urges</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
 
 	<div class="numberedPage">
-		<!-- TODO -->
+		<H1 class="onlyPrint">Propagating Urges</H1>
+		<H3>Step 0: Pick a target</H3>
+
+		<P class="instructions">Consider using Prop Urges whenever you have a task X, for which:</P>
+		<ol class="instructions">
+			<li>X is useful, is necessary, is something you feel you "have to" do, or otherwise seems to be a pretty good idea to do;</li>
+			<li>X does not already seem yummy to you; you have no strong urge to complete X.</li>
+			<li>Nevertheless, you do sometimes do X, e.g. via willpower.</li>
+			<li>There is no terrible aversion in the mix. E.g., you do not cringe horribly when discussing it.</li>
+		</ol>
+		<P class="instructions">The urge-gap seems more like "absence of any strong positive motivation" than like "presence of an overwhelming negative motivation". (It’s okay if there are small ughs, along the lines of what most people have about their taxes.)</P>
+
+		<P class="instructions">(If there is a terrible aversion in the mix, do aversion-factoring instead.)</P>
+
+		<P class="instructions">That is (on this view): any time you regularly do a task (e.g., because you "should") and yet you <i>find the task boring, painful, pointless, aversive, or less than fully motivating,</i> this is a state of error. You can fix it by doing propagating urges and/or aversion-factoring. (You might want to build yourself a trigger-response pattern that flags these states, and that suggests you run the procedure then.)</P>
+
+		<div class="step" weight="1" duration="3"></div>
+
+		<H3>Step 1: Goal-factor</H3>
+
+		<P class="instructions">Step 1 of Prop Urges is a particular sort of goal-factoring.</P>
+
+		<P class="instructions">You take the activity that you’d like to find yummy, and put it in an oval on the top of your page.  (Example: You might write "Jogging", "Notice mistakes", or "Work on dissertation"). Then, you draw a downward line to a second oval, and, in the second oval, you write just one good thing that that activity accomplishes for you (E.g., below "Notice mistakes", you might write: "Gain power faster").</P>
+
+		<P class="instructions">You win when system 1 and system 2 agree on three things:</P>
+		<ol class="instructions">
+			<li>You are capable of doing the task. (If your task is "creating a report", your system 1 believes that you can create reports, and that they aren’t just some magic thing that only other people can do.)</li>
+			<li>The end-goal (the "desirable thing Y" that X will purportedly help with) is desirable and yummy</li>
+			<li>X really is a good way to achieve Y (there isn’t some other, substantially better/faster/easier, route) </li>
+		</ol>
+
+		<P class="instructions">By the time you’ve finished Step 1, the idea of doing a little piece of Step X should sound yummy.</P>
+
+		<div class="step" weight="2" duration="5"></div>
+
+		<H3>Step 2: Trigger-Affect Planning</H3>
+
+		<P class="instructions">Boot up your inner simulator, and imagine going through the task. How would you like to feel as you go through it, if you were the sort of person you want to be? What specific triggers should prompt what affects? If you’re jogging, would you like the burning feeling in your leg muscles to feel good? How about the feeling of the wind in your hair? What kind of "good" would each of these feel?</P>
 	</div>
+	<div class="numberedPage">
+		<P class="instructions">If there are some aspects of the activity are currently triggering pain, fear, or aversiveness when you do the task, it is often good to re-incorporate those aspects as triggers of some new affect (e.g., to take muscle pain that was feeling aversive, and re-incorporate it as “the feeling of successfully pushing my limits, so I can grow stronger running muscles.”).</P>
+
+		<P class="instructions">The guiding principle here is something like virtue ethics: how would the person you’d most admire feel, as they (went jogging, or noticed a mistake, or did whatever activity you’re considering)?</P>
+
+		<div class="step" weight="1" duration="5"></div>
+		<div class="worksheetPageBreak"></div>
+
+		<h3>Step 3: Find a pointer-image, so you can “see it at a glance”. (“Goblin furnace images”)</H3>
+
+		<P class="instructions">Again, you’ve finished Step 1: so the task, for the moment at least, sounds yummy. Why aren’t you done? Because it’s temporary: you haven’t yet made the yumminess sticky.</P>
+
+		<P class="instructions">One way to make it sticky would be to revisit all that thinking you did in Step 1, every time you want to write a new paragraph of your dissertation. But that would be slow and cumbersome.</P>
+
+		<P class="instructions">A more efficient thing to do is, after you finish Step 1, to look over it a while until you can “see it at a glance” – much the way you might look over a mathematical proof until you can “see at a glance” why the theorem holds. Then, come up with an image, phrase, song, or other emotional-library item that can serve as a pointer to the analysis you did in step 1: something that can remind you of how & why doing X actually helps toward achieving yummy things that you care about.</P>
+
+		<P class="instructions">Two methods to consider, when crafting images:</P>
+
+		<ul class="instructions">
+			<li>Pick any movie that is emotionally resonant for you. Link it to your thinking.</li>
+			<li>Look through the list of people you’ve known. Find someone who is memorably good or memorably bad at the thing you’re working on.</li>
+		</ul>
+
+		<div class="step" weight="1" duration="5"></div>
+
+		<H3>Step 4: Fit-check, and mental practice</H3>
+
+		<P class="instructions">Now, close your eyes, boot up your inner simulator, and do a “fit check”: imagine going through the situation, this time with your image in mind in the background. (E.g., in Val's example (shared aloud), Val might visualize himself doing pushups, notice how the pain was going to feel, and simultaneously visualize his goblin-furnace image). Imagine the trigger-affect responses playing out as planned. Do you like the fit? Does the new affect pattern suit you? Or does it feel weird, fake, forced, or unlikely to work?</P>
+
+		<P class="instructions">If the new pattern does “sit right” with you, go ahead and practice it several times in your inner simulator, to help it stick. You may also want to try real-life practice, in your “outer simulator”, aka the world.</P>
+
+		<P class="instructions">If the new pattern <i>doesn't</i> sit right with you – if it feels odd, fake, unlikely to work, or forced in some way – revisit step 1. “Stop, drop, and goal-factor”</P>
+
+		<div class="step" weight="1" duration="5"></div>
+	</div>
+	<div class="numberedPage instructions">
+		<H3>Appendix 1: Troubleshooting</H3>
+
+		<P>Ask your "inner simulator" if it expects this process (steps 0-4 above) to work! If the process feels odd or unlikely to work, check these steps:</P>
+
+		<P>1. Make sure you actually want your brain to reinforce this action. If you could just press a button and thereby have an <i>urge</i> to do the action, would you press the button? Or might that cause problems? Take a moment to search for good reasons not to acquire this urge, and for any emotional hesitations you might have. Think them through.</P>
+
+		<P>2. Make sure <i>your emotional brain</i> agrees with you, about wanting to feel a visceral, in the moment pull toward this action. If you balk emotionally at desiring this new action, your brain will be giving you a little electric shock every time you try to condition yourself toward the habit - and the urge propagation won't work.</P>
+
+		<P>3. Make sure you’re using a real causal link to meditate on, experience, and generate images. If you don’t buy (verbally and emotionally) that the goal and the sub-action are really connected, the process might fizzle out.</P>
+
+		<P>4. Make sure your emotional brain (and you) are okay with the urge propagation <i>process</i>. If you balk emotionally at the idea of changing your own urges, your brain will (again) be giving you a little electric shock every time you try to link the urge to a new action – and the new feeling won’t stick.</P>
+
+		<P><i>Note that these four trouble-shooting steps are parts of goal-factoring. It is good to do goal-factoring on “be a famous author” and “regularly rewrite paragraphs” before you try to propagate the urge “be a famous author” into the urge “regularly rewrite paragraphs”.</i></P>
+	</div>
+	<div class="numberedPage instructions">
+		<H3>Appendix 2: Urges that are often useful to propagate</H3>
+
+		<P>A lot of participants (and CFAR staff) have found the following urges particularly useful to propagate. The first set help make common, everyday goals faster and easier. The second help subvert the unconscious, unhelpful conditioning that many people habitually engage in.</P>
+
+		<P>We’ve given a few starting points for these urges, to help kickstart your urge propagation process (steps 0-3 above). You’ll need to take some time to find motives that resonate with you.</P>
+		<B>For everyday goals:</B>
+		<ul>
+			<li>Every time you send an email: a fist pumping feeling of “Yes! I just sent an email!”</li>
+			<li>Pomodoros:<ul>
+				<li>When you start a pomodoro: “Yes! I’m about to get closer to [vivid thing you like about goal]!”</li>
+				<li>When you finish a pomodoro: “Go me! I just made progress toward [goal]!”</li>
+			</ul></li>
+			<li>When you discard unnecessary things: “Huzzah! I repelled the advancing forces of mess!”</li>
+			<li>When you cut a low-priority item from your todo list: “Woohoo! I just brought into being a better-rested, less-stressed me to do the tasks I really care about!”</li>
+		</ul>
+
+		<B>For expanding your ability to act/perceive/imagine:</B>
+		<ul>
+			<li>When you notice you made a mistake: “Yes! I noticed! Now I have the ability to learn and/or intervene!”</li>
+			<li>When you notice you’re rationalizing: “Wow! I spotted that I’m rationalizing! I can pause and reflect now!”</li>
+			<li>When you notice you’re resisting information/experiencing a mental flinch: “Aha! My brain is trying to hide this from me! I’ll find strength to sally forth into the ugh field!”</li>
+			<li>When you’re going outside your comfort zone: “Ka-ching! I just earned a CoZE point! This is a bit uncomfortable which means I’m exploring!”</li>
+			<li>When you notice that you’re floundering with a new skill or feel like you look dumb/like a novice: “Whew! I’m at the edge of my current competency. This is what real learning feels like.”</li>
+		</ul>
+	</div>
+	<div class="numberedPage instructions"></div>
 </div> <!-- }}} -->
 <div class="section" id="FindingAversions"> <!-- {{{ -->
-	<div class="sectionTitle numberedPage">
+	<div class="instructions sectionTitle numberedPage">
 		<H1>Finding Aversions</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
 
-	<div class="numberedPage">
-		<div class="step" duration="1">
+	<div class="instructions numberedPage">
+	</div>
+	
+	<div class="numberedPage notInstructions">
+		<H1 class="onlyPrint">Finding Aversions</H1>
+
+		<div class="step" weight="1" duration="1">
 			<H3>1. Things I often procrastinate doing:</H3>
 		</div>
-		<div class="step" duration="1">
+		<div class="step" weight="1" duration="1">
 			<H3>2. Activities I am easily distracted from in the moment of doing them:</H3>
 		</div>
-		<div class="step" duration="1">
+		<div class="step" weight="1" duration="1">
 			<H3>3. Things my parents, partner, or friends suggest, but that I don't do:</H3>
 		</div>
-		<div class="step" duration="1">
+
+		<div class="worksheetPageBreak"></div>
+
+		<div class="step" weight="1" duration="1">
 			<H3>4. Domains of knowledge or skills I've "never gotten around" to learning:</H3>
 		</div>
-		<div class="step" duration="1">
+		<div class="step" weight="1" duration="1">
 			<H3>5. Questions about life or myself that I've "never gotten around" to addressing:</H3>
 		</div>
-		<div class="step" duration="1">
+		<div class="step" weight="1" duration="1">
 			<H3>6. Why I'm not trying to become rich, famous, attractive, physically fit, an expert in some field, or a political leader:</H3>
 		</div>
-		<div class="step" duration="1">
+		<div class="step" weight="1" duration="1">
 			<H3>7. Anything else that comes to mind that I want to list:</H3>
 		</div>
 	</div>
 </div> <!-- }}} -->
 <div class="section placeholder" id="AversionFactoring"> <!-- {{{ -->
-	<div class="sectionTitle numberedPage">
+	<div class="instructions sectionTitle numberedPage">
 		<H1>Aversion Factoring</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
@@ -926,13 +1210,13 @@ $(document).ready(function()
 	</div>
 </div> <!-- }}} -->
 <div class="section placeholder" id="Againstness"> <!-- {{{ -->
-	<div class="sectionTitle numberedPage">
+	<div class="instructions sectionTitle numberedPage">
 		<H1>Againstness</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
 </div> <!-- }}} -->
 <div class="section placeholder" id="YourBugsList"> <!-- {{{ -->
-	<div class="sectionTitle numberedPage">
+	<div class="instructions sectionTitle numberedPage">
 		<H1>Your Bugs List</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
@@ -942,7 +1226,7 @@ $(document).ready(function()
 	</div>
 </div> <!-- }}} -->
 <div class="section placeholder" id="TriggerActionPlanning"> <!-- {{{ -->
-	<div class="sectionTitle numberedPage">
+	<div class="instructions sectionTitle numberedPage">
 		<H1>Trigger-Action Planning</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
@@ -952,7 +1236,7 @@ $(document).ready(function()
 	</div>
 </div> <!-- }}} -->
 <div class="section placeholder" id="Systemization"> <!-- {{{ -->
-	<div class="sectionTitle numberedPage">
+	<div class="instructions sectionTitle numberedPage">
 		<H1>Systemization</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
@@ -962,7 +1246,7 @@ $(document).ready(function()
 	</div>
 </div> <!-- }}} -->
 <div class="section placeholder" id="ComfortZoneExpansion"> <!-- {{{ -->
-	<div class="sectionTitle numberedPage">
+	<div class="instructions sectionTitle numberedPage">
 		<H1>Comfort Zone Expansion</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
@@ -972,43 +1256,57 @@ $(document).ready(function()
 	</div>
 </div> <!-- }}} -->
 <div class="section" id="HammingPrompts"> <!-- {{{ -->
-	<div class="sectionTitle numberedPage">
-		<H1 class="onWorksheet">Hamming Prompts</H1>
+	<div class="instructions sectionTitle numberedPage">
+		<H1 class="">Hamming Prompts</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
 
+	<style>
+		/* Shrink the whitespace between H3 and P for this section only, so that
+		   it doesn't overflow the page. */
+		#HammingPrompts H3 {
+			margin-bottom: 0;
+		}
+		#HammingPrompts P {
+			margin-top: 4px;
+		}
+	</style>
 	<div class="numberedPage">
-		<div class="step" duration="4">
+		<H1 class="onlyPrint">Hamming Prompts</H1>
+
+		<div class="step" weight="1" duration="4">
 			<H3>Step 0. Initial thoughts</H3>
 			<P class="instructions">Did anything come up already? Is anything staring you in the face right now? Now that you have the idea of a "Hamming question" in mind: is anything obvious as your most important problem?</P>
 		</div>
 
-		<div class="step" duration="4">
+		<div class="step" weight="1" duration="4">
 			<H3>Step 1. Rate-limiting step</H3>
 			<P class="instructions">The speed of a chemical reaction is determined by the speed of the slowest step - the rate-limiting step. What is yours? Or: what's your bottleneck? Is there a problem where solving it would be the equivalent of "wishing for more wishes?"</P>
 		</div>
 
-		<div class="step" duration="4">
+		<div class="step" weight="1" duration="4">
 			<H3>Step 2. What are you not allowed to care about?</H3>
 			<P class="instructions">Or: Is there some good outcome that you generally don't think about because it's too big to picture? Or too impossible?</P>
 		</div>
 
-		<div class="step" duration="4">
+		<div class="step" weight="1" duration="4">
 			<H3>Step 3. Genre-savviness</H3>
 			<P class="instructions">When you're reading a novel, sometimes it seems like the book is dragging/stuck because there is an obvious thing that the character needs to do next in order to advance the plot (e.g., clearly she needs to go talk to the magician - can't she just do it already?). If your life is a novel: what is that obvious next thing?</P>
 		</div>
 
-		<div class="step" duration="5">
+		<div class="worksheetPageBreak"></div>
+		
+		<div class="step" weight="1" duration="5">
 			<H3>Step 4. What are you already pursuing, badly, in a convoluted/distorted way?</H3>
 			<P class="instructions">Pica is a medical condition in which people who are iron deficient (for example) eat things like ice cubes, because the signal to eat things with iron is getting distorted into an urge to eat things which share superficial properties with iron. So: what is everything you're doing a pica for?</P>
 		</div>
 
-		<div class="step" duration="5">
+		<div class="step" weight="1" duration="5">
 			<H3>Step 5. Magnitude of your problems</H3>
 			<P class="instructions">Which problems in your life have effects that are the largest order of magnitude? You may want to think separately about the effects on you and the effects on the world. For example, for effects on you: If you think about the gap between your current life and a better version of your life, which problem could you solve to cross the largest fraction of that gap? Or, for effects on the world: If you think about the size of your positive impact on the world, which problem could you solve to increase that impact by the largest amount?</P>
 		</div>
 
-		<div class="step" duration="5">
+		<div class="step" weight="1" duration="5">
 			<H3>Step 6. Focusing</H3>
 			<P class="instructions">Say aloud: "My life is fine." (Or: "I feel all fine and good about my life.")<BR>
 			If you're like most people, something will catch in your throat. Write it down.<BR>
@@ -1016,14 +1314,14 @@ $(document).ready(function()
 			For most people, something will catch maybe 3-5 times, and then the sentence will ring true. ("Apart from A, B, C, and D, my life really is fine.")</P>
 		</div>
 
-		<div class="step" duration="5">
+		<div class="step" weight="1" duration="5">
 			<H3>Step 7. Final go</H3>
 			<P class="instructions">So, having now gone through all of that: What feels most alive? What is the most important problem, for you right now?</P>
 		</div>
 	</div>
 </div> <!-- }}} -->
 <div class="section placeholder" id="OfflineHabitTraining"> <!-- {{{ -->
-	<div class="sectionTitle numberedPage">
+	<div class="instructions sectionTitle numberedPage">
 		<H1>Offline Habit Training</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
@@ -1033,7 +1331,7 @@ $(document).ready(function()
 	</div>
 </div> <!-- }}} -->
 <div class="section placeholder" id="FrameByFrameDebugging"> <!-- {{{ -->
-	<div class="sectionTitle numberedPage">
+	<div class="instructions sectionTitle numberedPage">
 		<H1>Frame-by-Frame Debugging</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
@@ -1043,7 +1341,7 @@ $(document).ready(function()
 	</div>
 </div> <!-- }}} -->
 <div class="section placeholder" id="FocusedGrit"> <!-- {{{ -->
-	<div class="sectionTitle numberedPage">
+	<div class="instructions sectionTitle numberedPage">
 		<H1>Focused Grit</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
@@ -1053,7 +1351,7 @@ $(document).ready(function()
 	</div>
 </div> <!-- }}} -->
 <div class="section placeholder" id="ValueOfInformation"> <!-- {{{ -->
-	<div class="sectionTitle numberedPage">
+	<div class="instructions sectionTitle numberedPage">
 		<H1>Value of Information</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
@@ -1063,48 +1361,50 @@ $(document).ready(function()
 	</div>
 </div> <!-- }}} -->
 <div class="section" id="MakingLargeUpdates"> <!-- {{{ -->
-	<div class="sectionTitle numberedPage">
+	<div class="instructions sectionTitle numberedPage">
 		<H1>Making Large Updates</H1>
 		<div class="attribution">By James Babcock.</div>
 	</div>
 
 	<div class="numberedPage">
-		<H1 class="onWorksheet onlyPrint">Making Large Updates</H1>
+		<H1 class="onlyPrint">Making Large Updates</H1>
 		
-		<div class="step" duration="2">
+		<div class="step" weight="1" duration="2">
 			<H3>1. Clarify.</H3>
-			<P class="instructions">How, exactly, have your beliefs changed? Write down what you used to believe, what you believe now, and how these differ.</P>
+			<P class="instructions">How, exactly, have your beliefs changed? Write down what you used to believe, what you believe now, and how these differ, as clearly and succinctly as you can.</P>
 		</div>
 
-		<div class="step" duration="5">
+		<div class="step" weight="2" duration="5">
 			<H3>2. Check.</H3>
-			<P class="instructions">Are you confident that this change is correct?</P>
+			<P class="instructions">Are you confident that this change is correct? Take a few minutes to honestly evaluate the strength of the evidence.</P>
 		</div>
 
 		<div class="midSheetInstructions">If yes, continue.<br>
 		If no, do not continue with this sheet. Instead, you may which to use Focused Grit or another technique to determine whether the update is correct.</div>
 
-		<div class="step" duration="5">
+		<div class="step" weight="1" duration="5">
 			<H3>3. Trace the change.</H3>
 			<P class="instructions">Was there a specific observation that inspired the change? Was this the result of thinking seriously about something for the first time?</P>
 		</div>
 
-		<div class="step" duration="5">
+		<div class="step" weight="1" duration="5">
 			<H3>4. Trace the old belief.</H3>
 			<P class="instructions">How long did you hold the old belief, and what caused you to do so? Does this suggest a reference class in which more false beliefs might be found?</P>
 		</div>
 
-		<div class="step" duration="5">
+		<div class="worksheetPageBreak"></div>
+
+		<div class="step" weight="1" duration="5">
 			<H3>5. Write implications of the old belief.</H3>
 			<P class="instructions">You will want to reevaluate these later, but you should avoid rushing too quickly to the conclusion that they're untrue.</P>
 		</div>
 
-		<div class="step" duration="5">
+		<div class="step" weight="1" duration="5">
 			<H3>6. Write implications of the new belief.</H3>
 			<P class="instructions">What are some consequences your now beliefs have? Given what you know now, are any longstanding mysteries now ready to resolve?</P>
 		</div>
 
-		<div class="step" duration="5">
+		<div class="step" weight="1" duration="5">
 			<H3>7. Check for confusion.</H3>
 			<P class="instructions">Do you notice anything which still seems to not make sense? Are there new questions that now require thought?</P>
 		</div>
@@ -1215,7 +1515,7 @@ $(document).ready(function()
 		an odd number of pages, while worksheets are always an even number of
 		pages. Insert blank pages if necessary to make this true.</P>
 
-		<H2>Worksheet Extraction</H2>
+		<H2>Worksheet Extraction and Layout</H2>
 
 		<P>Sections are written with instructions and worksheets mixed
 		together. This is rendered three different ways: Instructions,
@@ -1228,6 +1528,22 @@ $(document).ready(function()
 		prompts. The Instructions view pages are numbered, while the Worksheet
 		view pages aren't (since there are meant to be multiple copies, and
 		copies are meant to be inserted and removed).</P>
+
+		<P>Worksheets are manually paginated, but not with the "numberedPage"
+		elements (which determines page-breaks for the instructions view and
+		miscellaneous content). Instead, worksheet page-breaks are created with
+		a .worksheetPageBreak element:</P>
+
+		<code class="codeBlock">
+			&lt;div class="worksheetPageBreak&gt;&lt;/div&gt;
+		</code>
+
+		<P>The blank spaces for questions on worksheets are automatically sized.
+		Each prompt that should have a blank space under it should have a
+		"weight" attribute, which is a number; the sizes of the blank spaces
+		are proportional to weight; eg if a page contains an element with
+		weight="2" and an element with weight="1", then two-thirds of the space
+		will go to the first element.</P>
 	</div>
 </div> <!-- }}} -->
 </div>
