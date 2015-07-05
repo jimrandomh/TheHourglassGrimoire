@@ -11,12 +11,6 @@ the file. This is to make it easy to carry around, open from email attachments,
 store on your phone for offline use, and whatnot. Open this in a browser for
 more metadata, including copyright information and terms of redistribution.
 
-Note that, when editing this, you probably want a text editor which can do
-marker-based folding (with triple-curly-braces as the open and closing markers).
-In the case of vim, that would be
-
-	:set foldmethod=marker
-	:set foldmarker={{{,}}}
 
 -->
 <html>
@@ -84,8 +78,10 @@ In the case of vim, that would be
 /******************************************************************************
  * Section title pages                                                        *
  *****************************************************************************/
-.sectionTitle {
-	text-align: center;
+@media print {
+	.sectionTitle {
+		text-align: center;
+	}
 }
 
 .sectionTitle .attribution {
@@ -137,12 +133,17 @@ In the case of vim, that would be
 		page-break-after: always;
 	}
 
-	.tableOfContentsGrid a {
+	#TableOfContents a {
 		position: relative;
+		text-decoration: none;
 	}
 	.pageNumberDisplay {
 		position: absolute;
-		left: 250px;
+		left: 300px;
+	}
+
+	a {
+		color: black !important;
 	}
 }
 
@@ -194,6 +195,21 @@ P {
 
 .midSheetInstructions {
 	font-style: italic;
+}
+
+.codeBlock {
+	padding-left: 20px;
+	display: block;
+}
+
+H4 {
+	margin-top: 6px;
+	margin-bottom: 6px;
+}
+
+ul {
+	margin-top: 6px;
+	margin-bottom: 6px;
 }
 
 /******************************************************************************
@@ -252,6 +268,12 @@ P {
 }
 
 /******************************************************************************
+ * Multi-Rendering                                                            *
+ *****************************************************************************/
+.worksheet .onlyWorksheet {
+}
+
+/******************************************************************************
  * Miscellaneous                                                              *
  *****************************************************************************/
 
@@ -276,9 +298,9 @@ return new Za.prototype.init(a,b,c,d,e)}m.Tween=Za,Za.prototype={constructor:Za,
 
 var numCopiesOfEachWorksheet = 3;
 
-/// Find all the worksheets (elements with the "worksheet" class), and expand
-/// attributes into rendered elements - ie, make the "duration" attribute on
-/// divs of type ".step" show some text, and add textareas.
+/// Find all the worksheets, and expand attributes into rendered elements - ie,
+/// make the "duration" attribute on divs of type ".step" show some text, and
+/// add textareas.
 function expandWorksheets()
 {
 	var steps = $(".step");
@@ -426,10 +448,12 @@ function addPageNumbers()
 		var pageNumber = ii+1;
 		var pageNumberElement = $('<div class="pageNumber">'+pageNumber+'</div>');
 		pageNumberElement.prependTo(pageElement);
+		$(pageElement).attr("number", pageNumber);
 		
 		var anchorName = getAnchorNameFor(pageElement);
 		if(anchorName && !(anchorName in pageNumbers))
 			pageNumbers[anchorName] = pageNumber;
+		pageNumbers[pageElement] = pageNumber;
 	}
 	
 	var pageNumberRefs = $(".pageNumberRef");
@@ -438,11 +462,32 @@ function addPageNumbers()
 	{
 		var linkElement = $(pageNumberRefs[ii]);
 		var target = linkElement.attr('href');
-		var pageNumberStr = "?";
-		if(anchorName in pageNumbers)
-			pageNumberStr = ""+pageNumbers[target];
-		$('<span class="pageNumberDisplay">'+pageNumberStr+'</span>').appendTo(linkElement);
+		
+		if(!target.startsWith("#"))
+			continue;
+		
+		var targetID = target.substring(1);
+		var targetElement = document.getElementById(targetID);
+		var pageNumber = getPageNumberFor(targetElement);
+		$('<span class="pageNumberDisplay">'+pageNumber+'</span>').appendTo(linkElement);
 	}
+}
+
+function getPageNumberFor(element)
+{
+	var numberedPagesInside = $(".numberedPage", element);
+	if(numberedPagesInside.length > 0)
+		return $(numberedPagesInside[0]).attr("number");
+	
+	var pos = element;
+	while(pos)
+	{
+		if($(pos).hasClass("numberedPage"))
+			return $(pos).attr("number");
+		pos = pos.parentElement;
+	}
+
+	return "?";
 }
 
 /// Modify the page so that only the given element (subpage) is visible, by
@@ -663,28 +708,47 @@ $(document).ready(function()
 <div id="TableOfContents" class="numberedPage"> <!-- {{{ -->
 	<H1>Table of Contents</H1>
 
-	<ul class="tableOfContentsGrid">
-		<li><a href="#Preface" class="pageNumberRef">Preface</a></li>
+	<H4>Preface</H4>
+	<ul>
+		<li><a href="#Introduction" class="pageNumberRef">Introduction</a></li>
+		<li><a href="#TheWayOfTheVoid" class="pageNumberRef">The Way of the Void</a></li>
+		<li><a href="#HowToUseThisBook" class="pageNumberRef">How To Use This Book</a></li>
+		<li><a href="#AcknowledgementsAndCopyright" class="pageNumberRef">Acknowledgements and Copyright</a></li>
+	</ul>
+
+	<H4>Decision Making</H4>
+	<ul>
 		<li><a href="#Murphyjitsu" class="pageNumberRef">Murphy-jitsu</a></li>
 		<li><a href="#MakingHardDecisions" class="pageNumberRef">Making Hard Decisions</a></li>
+	</ul>
+
+	<H4>Motivation</H4>
+	<ul>
 		<li><a href="#GoalFactoring" class="pageNumberRef">Goal Factoring</a></li>
 		<li><a href="#PropagatingUrges" class="pageNumberRef">Propagating Urges</a></li>
 		<li><a href="#FindingAversions" class="pageNumberRef">Finding Aversions</a></li>
 		<li><a href="#AversionFactoring" class="pageNumberRef">Aversion Factoring</a></li>
 		<li><a href="#Againstness" class="pageNumberRef">Againstness</a></li>
-		<li><a href="#FocusedGrit" class="pageNumberRef">Focused Grit</a></li>
-		<li><a href="#FrameByFrameDebugging" class="pageNumberRef">Frame-by-Frame Debugging</a></li>
+	</ul>
+
+	<H4>General Self-Improvement</H4>
+	<ul>
 		<li><a href="#YourBugsList" class="pageNumberRef">Your Bugs List</a></li>
 		<li><a href="#TriggerActionPlanning" class="pageNumberRef">Trigger-Action Planning</a></li>
 		<li><a href="#Systemization" class="pageNumberRef">Systemization</a></li>
 		<li><a href="#ComfortZoneExpansion" class="pageNumberRef">Comfort Zone Expansion</a></li>
 		<li><a href="#HammingPrompts" class="pageNumberRef">Hamming Prompts</a></li>
 		<li><a href="#OfflineHabitTraining" class="pageNumberRef">Offline Habit Training</a></li>
+	</ul>
+	<H4>Miscellaneous</H4>
+	<ul>
+		<li><a href="#FrameByFrameDebugging" class="pageNumberRef">Frame-by-Frame Debugging</a></li>
+		<li><a href="#FocusedGrit" class="pageNumberRef">Focused Grit</a></li>
 		<li><a href="#ValueOfInformation" class="pageNumberRef">Value of Information</a></li>
 		<li><a href="#MakingLargeUpdates" class="pageNumberRef">Making Large Updates</a></li>
 	</ul>
 
-	<H2>Planned Expansions</H2>
+	<H4>Planned Expansions</H4>
 	<ul>
 		<li>Crystallizing Concepts</li>
 		<li>Goal Setting</li>
@@ -693,10 +757,15 @@ $(document).ready(function()
 		<li>Defusing Anger</li>
 		<li>Well-Being Checklist</li>
 	</ul>
+	
+	<H4>Appendices</H4>
+	<ul>
+		<li><a href="#HowToExtend" class="pageNumberRef">How to Extend the Hourglass Grimoire</a></li>
+	</ul>
 </div> <!-- }}} -->
 <div id="Preface"> <!-- {{{ -->
 	<div class="numberedPage">
-	<H1>Introduction</H1>
+	<H1 id="Introduction">Introduction</H1>
 
 	<P>There are many techniques for thinking about things. Some of them, like conversation strategies, are quick things done in the moment. Others are longer, like lists of things to consider. One especially powerful technique is the timer-worksheet. A timer worksheet is a series of questions, each of which has a duration specified; you set a timer on your phone or watch, and focus on that question exclusively until the timer runs out.</P>
 
@@ -704,7 +773,7 @@ $(document).ready(function()
 
 	<P>The Hourglass Grimoire is a collection of timer worksheets, designed to serve as a daily companion and to make the thinking techniques easy to get started on and to follow through to completion. However, this book is not a full explanation of the techniques, nor is it a good way of learning them if they are unfamiliar. While there is explanatory text, these are only reminders; if you start an exercise from its reminder text, you are likely to miss the essence of it.</P>
 
-	<H1>The Way of the Void</H1>
+	<H1 id="TheWayOfTheVoid">The Way of the Void</H1>
 
 	<blockquote>
 		"The primary thing when you take a sword in your hands is your intention to cut the enemy, whatever the means. Whenever you parry, hit, spring, strike or touch the enemy's cutting sword, you must cut the enemy in the same movement. It is essential to attain this. If you think only of hitting, springing, striking or touching the enemy, you will not be able actually to cut him. More than anything, you must be thinking of carrying your movement through to cutting him."
@@ -722,13 +791,13 @@ $(document).ready(function()
 
 	</div><div class="numberedPage">
 	
-	<H1>How To Use This Book</H2>
+	<H1 id="HowToUseThisBook">How To Use This Book</H2>
 
 	<P>This book has both digital and print versions. The digital version is a single HTML file; if you want to have it available for use, save the file on your computer or phone. No internet access is required; all resources are embedded in the file.</P>
 
 	<P>You can make a print version just by loading the HTML version and using your web browser's Print functionality. (You should use Google Chrome for this; other browsers will not necessarily work.) This will give you all of the instructions and three copies of each worksheet. Double-sided printing is strongly recommended; things are arranged so that worksheets and guidelines on how to use them will be facing pages. After that, you will want to punch holes and put the pages in a three-ring binder. You might also wish to decorate the binder to give it some salience.</P>
 
-	<H1>Acknowledgements and Copyright</H1>
+	<H1 id="AcknowledgementsAndCopyright">Acknowledgements and Copyright</H1>
 
 	<P>This book draws heavily from the course materials from the Center For Applied Rationality's April 2015 workshop. However, this book is not a product of CFAR and it also contains content which is new or substantially altered, and which has not yet (as of v0.2) been seen by CFAR or tested by anyone. It was inspired by the section "Developing a Grimoire," which was presented much less literally than this take on it.</P>
 
@@ -744,6 +813,7 @@ $(document).ready(function()
 	<li>Print <input type="number" name="numPrintCopies" value="3"></input> copies of each worksheet</li>
 	</ul>
 </div> <!-- }}} -->
+
 <div class="section" id="Murphyjitsu"> <!-- {{{ -->
 	<div class="sectionTitle numberedPage">
 		<H1>Murphyjitsu</H1>
@@ -791,11 +861,7 @@ $(document).ready(function()
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop, with modifications.</div>
 	</div>
 
-	<div class="instructions numberedPage">
-		<!-- TODO -->
-	</div>
-
-	<div class="worksheet">
+	<div class="numberedPage">
 		<!-- TODO -->
 	</div>
 </div> <!-- }}} -->
@@ -805,11 +871,7 @@ $(document).ready(function()
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
 
-	<div class="instructions numberedPage">
-		<!-- TODO -->
-	</div>
-
-	<div class="worksheet">
+	<div class="numberedPage">
 		<!-- TODO -->
 	</div>
 </div> <!-- }}} -->
@@ -819,26 +881,38 @@ $(document).ready(function()
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
 
-	<div class="instructions numberedPage">
-		<!-- TODO -->
-	</div>
-
-	<div class="worksheet">
+	<div class="numberedPage">
 		<!-- TODO -->
 	</div>
 </div> <!-- }}} -->
-<div class="section placeholder" id="FindingAversions"> <!-- {{{ -->
+<div class="section" id="FindingAversions"> <!-- {{{ -->
 	<div class="sectionTitle numberedPage">
 		<H1>Finding Aversions</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
 
-	<div class="instructions numberedPage">
-		<!-- TODO -->
-	</div>
-
-	<div class="worksheet">
-		<!-- TODO -->
+	<div class="numberedPage">
+		<div class="step" duration="1">
+			<H3>1. Things I often procrastinate doing:</H3>
+		</div>
+		<div class="step" duration="1">
+			<H3>2. Activities I am easily distracted from in the moment of doing them:</H3>
+		</div>
+		<div class="step" duration="1">
+			<H3>3. Things my parents, partner, or friends suggest, but that I don't do:</H3>
+		</div>
+		<div class="step" duration="1">
+			<H3>4. Domains of knowledge or skills I've "never gotten around" to learning:</H3>
+		</div>
+		<div class="step" duration="1">
+			<H3>5. Questions about life or myself that I've "never gotten around" to addressing:</H3>
+		</div>
+		<div class="step" duration="1">
+			<H3>6. Why I'm not trying to become rich, famous, attractive, physically fit, an expert in some field, or a political leader:</H3>
+		</div>
+		<div class="step" duration="1">
+			<H3>7. Anything else that comes to mind that I want to list:</H3>
+		</div>
 	</div>
 </div> <!-- }}} -->
 <div class="section placeholder" id="AversionFactoring"> <!-- {{{ -->
@@ -847,11 +921,7 @@ $(document).ready(function()
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
 
-	<div class="instructions numberedPage">
-		<!-- TODO -->
-	</div>
-
-	<div class="worksheet">
+	<div class="numberedPage">
 		<!-- TODO -->
 	</div>
 </div> <!-- }}} -->
@@ -861,45 +931,13 @@ $(document).ready(function()
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
 </div> <!-- }}} -->
-<div class="section placeholder" id="FocusedGrit"> <!-- {{{ -->
-	<div class="sectionTitle numberedPage">
-		<H1>Focused Grit</H1>
-		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
-	</div>
-
-	<div class="instructions numberedPage">
-		<!-- TODO -->
-	</div>
-
-	<div class="worksheet">
-		<!-- TODO -->
-	</div>
-</div> <!-- }}} -->
-<div class="section placeholder" id="FrameByFrameDebugging"> <!-- {{{ -->
-	<div class="sectionTitle numberedPage">
-		<H1>Frame-by-Frame Debugging</H1>
-		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
-	</div>
-
-	<div class="instructions numberedPage">
-		<!-- TODO -->
-	</div>
-
-	<div class="worksheet">
-		<!-- TODO -->
-	</div>
-</div> <!-- }}} -->
 <div class="section placeholder" id="YourBugsList"> <!-- {{{ -->
 	<div class="sectionTitle numberedPage">
 		<H1>Your Bugs List</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
 
-	<div class="instructions numberedPage">
-		<!-- TODO -->
-	</div>
-
-	<div class="worksheet">
+	<div class="numberedPage">
 		<!-- TODO -->
 	</div>
 </div> <!-- }}} -->
@@ -909,11 +947,7 @@ $(document).ready(function()
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
 
-	<div class="instructions numberedPage">
-		<!-- TODO -->
-	</div>
-
-	<div class="worksheet">
+	<div class="numberedPage">
 		<!-- TODO -->
 	</div>
 </div> <!-- }}} -->
@@ -923,11 +957,7 @@ $(document).ready(function()
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
 
-	<div class="instructions numberedPage">
-		<!-- TODO -->
-	</div>
-
-	<div class="worksheet">
+	<div class="numberedPage">
 		<!-- TODO -->
 	</div>
 </div> <!-- }}} -->
@@ -937,11 +967,7 @@ $(document).ready(function()
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
 
-	<div class="instructions numberedPage">
-		<!-- TODO -->
-	</div>
-
-	<div class="worksheet">
+	<div class="numberedPage">
 		<!-- TODO -->
 	</div>
 </div> <!-- }}} -->
@@ -952,8 +978,6 @@ $(document).ready(function()
 	</div>
 
 	<div class="numberedPage">
-		<H1>Hamming Prompts</H1>
-
 		<div class="step" duration="4">
 			<H3>Step 0. Initial thoughts</H3>
 			<P class="instructions">Did anything come up already? Is anything staring you in the face right now? Now that you have the idea of a "Hamming question" in mind: is anything obvious as your most important problem?</P>
@@ -1004,11 +1028,27 @@ $(document).ready(function()
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
 
-	<div class="instructions numberedPage">
+	<div class="numberedPage">
 		<!-- TODO -->
 	</div>
+</div> <!-- }}} -->
+<div class="section placeholder" id="FrameByFrameDebugging"> <!-- {{{ -->
+	<div class="sectionTitle numberedPage">
+		<H1>Frame-by-Frame Debugging</H1>
+		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
+	</div>
 
-	<div class="worksheet">
+	<div class="numberedPage">
+		<!-- TODO -->
+	</div>
+</div> <!-- }}} -->
+<div class="section placeholder" id="FocusedGrit"> <!-- {{{ -->
+	<div class="sectionTitle numberedPage">
+		<H1>Focused Grit</H1>
+		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
+	</div>
+
+	<div class="numberedPage">
 		<!-- TODO -->
 	</div>
 </div> <!-- }}} -->
@@ -1018,11 +1058,7 @@ $(document).ready(function()
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
 
-	<div class="instructions numberedPage">
-		<!-- TODO -->
-	</div>
-
-	<div class="worksheet">
+	<div class="numberedPage">
 		<!-- TODO -->
 	</div>
 </div> <!-- }}} -->
@@ -1036,34 +1072,26 @@ $(document).ready(function()
 		<H1 class="onWorksheet onlyPrint">Making Large Updates</H1>
 		
 		<div class="step" duration="2">
-			<span class="stepDescription">
-				<H3>1. Clarify.</H3>
-				<P class="instructions">How, exactly, have your beliefs changed? Write down what you used to believe, what you believe now, and how these differ.</P>
-			</span>
+			<H3>1. Clarify.</H3>
+			<P class="instructions">How, exactly, have your beliefs changed? Write down what you used to believe, what you believe now, and how these differ.</P>
 		</div>
 
 		<div class="step" duration="5">
-			<span class="stepDescription">
-				<H3>2. Check.</H3>
-				<P class="instructions">Are you confident that this change is correct?</P>
-			</span>
+			<H3>2. Check.</H3>
+			<P class="instructions">Are you confident that this change is correct?</P>
 		</div>
 
 		<div class="midSheetInstructions">If yes, continue.<br>
 		If no, do not continue with this sheet. Instead, you may which to use Focused Grit or another technique to determine whether the update is correct.</div>
 
 		<div class="step" duration="5">
-			<span class="stepDescription">
-				<H3>3. Trace the change.</H3>
-				<P class="instructions">Was there a specific observation that inspired the change? Was this the result of thinking seriously about something for the first time?</P>
-			</span>
+			<H3>3. Trace the change.</H3>
+			<P class="instructions">Was there a specific observation that inspired the change? Was this the result of thinking seriously about something for the first time?</P>
 		</div>
 
 		<div class="step" duration="5">
-			<span class="stepDescription">
-				<H3>4. Trace the old belief.</H3>
-				<P class="instructions">How long did you hold the old belief, and what caused you to do so? Does this suggest a reference class in which more false beliefs might be found?</P>
-			</span>
+			<H3>4. Trace the old belief.</H3>
+			<P class="instructions">How long did you hold the old belief, and what caused you to do so? Does this suggest a reference class in which more false beliefs might be found?</P>
 		</div>
 
 		<div class="step" duration="5">
@@ -1077,11 +1105,129 @@ $(document).ready(function()
 		</div>
 
 		<div class="step" duration="5">
-			<span class="stepDescription">
-				<B>7. Check for confusion.</B>
-				<P class="instructions">Do you notice anything which still seems to not make sense? Are there new questions that now require thought?</P>
-			</span>
+			<H3>7. Check for confusion.</H3>
+			<P class="instructions">Do you notice anything which still seems to not make sense? Are there new questions that now require thought?</P>
 		</div>
+	</div>
+</div> <!-- }}} -->
+
+<div id="HowToExtend"> <!-- {{{ -->
+	<div class="numberedPage">
+		<H1>How to Extend the Hourglass Grimoire</H1>
+
+		<P>The Hourglass Grimoire is an HTML file, and as such, it can be
+		edited in a normal text editor. The canonical copy lives in a private
+		git repository on BitBucket, <a href="https://bitbucket.org/jimrandomh/the-hourglass-grimoire/src">https://bitbucket.org/jimrandomh/the-hourglass-grimoire/src</a>. You
+		can email <a href="mailto:jimrandomh@gmail.com">jimrandomh@gmail.com</a>
+		for access, but you only need this to coordinate development with other
+		writers; to make your own customizations, you can just edit the file.</P>
+		
+		<P>The Hourglass Grimoire differs from the sorts of HTML you may be
+		used to in a few important ways. First, it is meant to be carried
+		around as a single file and used offline. This means that all images,
+		scripts, stylesheets, sounds and other resources must be embedded in
+		the file directly, not referred to by URL. For Javascript and CSS, this
+		is just a matter of putting anything that might otherwise be a separate
+		file inline in a &lt;script&gt; or &lt;style&gt; tag. For images and
+		sound effects, you can inline them using a data: URL. There is a
+		convenient file-to-URL converter at <a href="http://dataurl.net/#dataurlmaker">http://dataurl.net/#dataurlmaker</a>. While there is no technical size limit for this
+		(size limits mentioned on dataurl.net refer to obsolete browser
+		versions), we'd prefer to keep the total file size of the Grimoire to
+		less than a megabyte unless there's a good reason not to.</P>
+		
+		<P>The presence of binary blocks and general non-splitting of this into
+		multiple files can make it awkward to edit. If your text editor
+		supports marker-based folding, you can use this feature to make it more
+		manageable by folding up (hiding) the portions you aren't working on.
+		The convention is that <code>{{{</code> marks the start of a foldable
+		region, and <code>}}}</code> marks the end of a foldable region. In
+		vim, you can enable folding by typing this after opening the file:</P>
+
+		<code class="codeBlock">
+			:set foldmethod=marker<br>
+			:set foldmarker={{{,}}}
+		</code>
+
+		<P>Even if you aren't using folding, it would be helpful to still
+		include the fold markers when you add sections.</P>
+		
+		<H2>Print Issues</H2>
+		
+		<P>The second major difference from normal HTML is that the Hourglass
+		Grimoire is designed for usage both in a web browser, and also in
+		print. Unfortunately, web-browser support for pagination and page
+		numbering is fairly bad, and the workarounds used have a few side
+		effects. The main issue is that the page numbering is not quite
+		automatic; while the page numbers in the table of contents and other
+		cross-references are filled in automatically, the placement of
+		page-breaks is entirely manual. The division between pages is done by
+		wrapping blocks of content in</P>
+
+		<code class="codeBlock">
+			&lt;div class="numberedPage"&gt;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;One page's worth of content<br>
+			&lt;/div&gt;
+		</code>
+		
+		<P>It's important that all content (which is to be included in the
+		print version) is wrapped this way, and that one
+		<code>numberedPage</code> element does not overflow to more than a
+		page's worth of space. Content which isn't wrapped will appear on pages
+		with no page numbers on them. If one <code>numberedPage</code> element
+		exceeds one page's worth of content, only the first page will have a
+		page number on it.</P>
+	</div>
+	<div class="numberedPage">
+		<P>Creating cross-references with page numbers is fairly easy; it's the
+		same as a normal in-page anchor link, with the page number filled in
+		automatically; the only difference is that you add the
+		<code>pageNumberRef</code> class to the anchor, eg:</P>
+
+		<code class="codeBlock">
+			&lt;li&gt;<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&lt;a href="#TableOfContents" class="pageNumberRef"&gt;Table of Contents&lt;/a&gt;<br>
+			&lt;/li&gt;
+		</code>
+
+		<P>Looks like:</P>
+		
+		<li style="padding-left: 20px;">
+			<a href="#TableOfContents" class="pageNumberRef">Table of Contents</a>
+		</li>
+
+		<P>In general, if you are making edits, you should make sure to look at
+		both the in-browser and print versions. (You don't need to actually
+		print; Chrome's Print Preview is accurate enough for this purpose.</P>
+
+		<H2>Left and Right Pages</H2>
+
+		<P>When printed with two-sided printing and placed in a binder,
+		odd-numbered pages are "right" pages while even-numbered pages are
+		"left" pages. (These numbers refer to the raw numbering sequence, not
+		the one that is displayted in the corner of the page, since that
+		sequence skips some pages).</P>
+
+		<P>By convention, the title page of each section is a right page, and
+		the first page of each worksheet is also a right page. This means that
+		the last page of instructions faces the first page of the worksheet. If
+		the instructions are more than one page long, then this should be some
+		sort of summary page. Note that this means that instructions are always
+		an odd number of pages, while worksheets are always an even number of
+		pages. Insert blank pages if necessary to make this true.</P>
+
+		<H2>Worksheet Extraction</H2>
+
+		<P>Sections are written with instructions and worksheets mixed
+		together. This is rendered three different ways: Instructions,
+		Worksheet, and Mixed, containing different subsets of the elements.
+		When you use the Grimoire in your browser, this is Mixed view. When you
+		print, you will by default get one copy of the Instructions view,
+		followed by three copies of the Worksheet view. The idea is that the
+		Instructions view contains all the long text, while the Worksheet view
+		is mostly empty space to write in, but they have the same sequence of
+		prompts. The Instructions view pages are numbered, while the Worksheet
+		view pages aren't (since there are meant to be multiple copies, and
+		copies are meant to be inserted and removed).</P>
 	</div>
 </div> <!-- }}} -->
 </div>
