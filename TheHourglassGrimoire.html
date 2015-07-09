@@ -128,11 +128,18 @@ a.tocPlaceholder {
 }
 
 @media print {
-	.pageNumber {
+	.pageNumberContainer {
 		width: 100%;
 		text-align: right;
-		right: 1.0in;
-		bottom: 1.0in;
+		right: 0;
+		height: 0.5in;
+		position: relative;
+	}
+	
+	.pageNumber {
+		position: absolute;
+		right: 0;
+		bottom: 0.1in;
 	}
 
 	.numberedPage {
@@ -161,6 +168,19 @@ a.tocPlaceholder {
 		margin: 0 auto;
 		width: 800px;
 		padding-bottom: 100px;
+	}
+}
+
+@media print {
+	body {
+		margin: 0;
+		font-size: 10pt;
+	}
+	@page {
+		margin-left: 1in;
+		margin-right: 1in;
+		margin-top: 0.5in;
+		margin-bottom: 0.5in;
 	}
 }
 
@@ -206,6 +226,7 @@ H3 {
 .codeBlock {
 	padding-left: 20px;
 	display: block;
+	font-size: 10pt;
 }
 
 H4 {
@@ -237,6 +258,7 @@ ul {
 
 @media print {
 	.worksheet, .worksheetPage {
+		margin-top: 0.5in;
 		page-break-after: always;
 	}
 	textarea {
@@ -279,6 +301,10 @@ ul {
 @media print {
 	.mixedRender {
 		display: none;
+	}
+
+	.blankPage {
+		opacity: 0;
 	}
 }
 
@@ -468,8 +494,9 @@ function doWorksheetLayoutForPage(page)
 	}
 
 	// Amount of space to auto-allocate from. This is letter size minus 1 inch
-	// top and bottom margins minus half an inch fudge.
-	var pageHeightInches = 8.2
+	// top and bottom margins minus half an inch fudge. The fudge is caused by
+	// failing to account for inter-element margins properly.
+	var pageHeightInches = 8;
 	
 	var spaceToAllocate = pageHeightInches - totalFixedHeight;
 	var scaleFactor = spaceToAllocate / totalWeight;
@@ -556,7 +583,7 @@ function addPageNumbers()
 	{
 		var pageElement = numberedPages[ii];
 		var pageNumber = ii+1;
-		var pageNumberElement = $('<div class="pageNumber">'+pageNumber+'</div>');
+		var pageNumberElement = $('<div class="pageNumberContainer"><div class="pageNumber">'+pageNumber+'</div></div>');
 		pageNumberElement.prependTo(pageElement);
 		$(pageElement).attr("number", pageNumber);
 		
@@ -884,7 +911,7 @@ $(document).ready(function()
 
 	<H4>General Self-Improvement</H4>
 	<ul>
-		<li><a href="#YourBugsList" class="tocPlaceholder pageNumberRef">Your Bugs List</a></li>
+		<li><a href="#YourBugsList" class="pageNumberRef">Your Bugs List</a></li>
 		<li><a href="#TriggerActionPlanning" class="tocPlaceholder pageNumberRef">Trigger-Action Planning</a></li>
 		<li><a href="#Systemization" class="tocPlaceholder pageNumberRef">Systemization</a></li>
 		<li><a href="#ComfortZoneExpansion" class="tocPlaceholder pageNumberRef">Comfort Zone Expansion</a></li>
@@ -1117,13 +1144,14 @@ $(document).ready(function()
 		<P class="instructions">If the new pattern <i>doesn't</i> sit right with you – if it feels odd, fake, unlikely to work, or forced in some way – revisit step 1. “Stop, drop, and goal-factor”</P>
 
 		<div class="step" weight="1" duration="5"></div>
+
+		<H3 class="instructions">Appendix 1: Troubleshooting</H3>
+
+		<P class="instructions">Ask your "inner simulator" if it expects this process (steps 0-4 above) to work! If the process feels odd or unlikely to work, check these steps:</P>
+
+		<P class="instructions">1. Make sure you actually want your brain to reinforce this action. If you could just press a button and thereby have an <i>urge</i> to do the action, would you press the button? Or might that cause problems? Take a moment to search for good reasons not to acquire this urge, and for any emotional hesitations you might have. Think them through.</P>
 	</div>
 	<div class="numberedPage instructions">
-		<H3>Appendix 1: Troubleshooting</H3>
-
-		<P>Ask your "inner simulator" if it expects this process (steps 0-4 above) to work! If the process feels odd or unlikely to work, check these steps:</P>
-
-		<P>1. Make sure you actually want your brain to reinforce this action. If you could just press a button and thereby have an <i>urge</i> to do the action, would you press the button? Or might that cause problems? Take a moment to search for good reasons not to acquire this urge, and for any emotional hesitations you might have. Think them through.</P>
 
 		<P>2. Make sure <i>your emotional brain</i> agrees with you, about wanting to feel a visceral, in the moment pull toward this action. If you balk emotionally at desiring this new action, your brain will be giving you a little electric shock every time you try to condition yourself toward the habit - and the urge propagation won't work.</P>
 
@@ -1132,8 +1160,7 @@ $(document).ready(function()
 		<P>4. Make sure your emotional brain (and you) are okay with the urge propagation <i>process</i>. If you balk emotionally at the idea of changing your own urges, your brain will (again) be giving you a little electric shock every time you try to link the urge to a new action – and the new feeling won’t stick.</P>
 
 		<P><i>Note that these four trouble-shooting steps are parts of goal-factoring. It is good to do goal-factoring on “be a famous author” and “regularly rewrite paragraphs” before you try to propagate the urge “be a famous author” into the urge “regularly rewrite paragraphs”.</i></P>
-	</div>
-	<div class="numberedPage instructions">
+
 		<H3>Appendix 2: Urges that are often useful to propagate</H3>
 
 		<P>A lot of participants (and CFAR staff) have found the following urges particularly useful to propagate. The first set help make common, everyday goals faster and easier. The second help subvert the unconscious, unhelpful conditioning that many people habitually engage in.</P>
@@ -1159,7 +1186,6 @@ $(document).ready(function()
 			<li>When you notice that you’re floundering with a new skill or feel like you look dumb/like a novice: “Whew! I’m at the edge of my current competency. This is what real learning feels like.”</li>
 		</ul>
 	</div>
-	<div class="numberedPage instructions"></div>
 </div> <!-- }}} -->
 <div class="section" id="FindingAversions"> <!-- {{{ -->
 	<div class="instructions sectionTitle numberedPage">
@@ -1215,14 +1241,58 @@ $(document).ready(function()
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
 </div> <!-- }}} -->
-<div class="section placeholder" id="YourBugsList"> <!-- {{{ -->
+<div class="section" id="YourBugsList"> <!-- {{{ -->
 	<div class="instructions sectionTitle numberedPage">
 		<H1>Your Bugs List</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
 	</div>
 
 	<div class="numberedPage">
-		<!-- TODO -->
+		<H1 class="onlyPrint instructions">Your Bugs List</H1>
+		
+		<P class="instructions">We refer to anything that systematically goes wrong in your life as a “bug” (in reference to bugs in programming). This can be a glitch in your day-to-day routine, like never being able to find the matching sock. It also includes times when the plan you’re executing is well-designed and going fine, but it isn't getting you what you actually want. Bugs often provide useful information about where your way of doing things can be improved, and thus where you might want to focus your time and energy.</P>
+
+		<P class="instructions">In order to have a chance at fixing your bugs, you need to notice them as they occur. Things to look for include times when:</P>
+
+		<ul class="instructions">
+		<li>You feel a brief flash of annoyance or frustration</li>
+		<li>You feel conflicted, as if one part of you wants to do one thing and another part of you wants to do something else</li>
+		<li>You need to exert willpower in order to do something</li>
+		<li>Things go differently from how you planned</li>
+		<li>You feel distracted, rather than being engaged in what you are doing</li>
+		<li>It takes you a while to decide what to do</li>
+		<li>Anything else that feels non-ideal, or like something you might be interested in shifting but don’t know how</li>
+		<li>Things are going fine, but somehow you still feel vaguely unsatisfied</li>
+		</ul>
+
+		<P class="instructions">Examples of bugs:</P>
+
+		<ul class="instructions">
+		<li>Forgetting to (or purposely putting off) replying to important emails</li>
+		<li>“Every time I talk to so-and-so I end up in an argument”</li>
+		<li>Only remembering to buy batteries at inconvenient times</li>
+		<li>You submit expense reports on time, but you feel vaguely angsty and bothered whenever you do it.</li>
+		<li>You only start assignments or essays the night before they’re due, even though you hate the stress of last minute all-nighters</li>
+		<li>You find one of your coworkers irritating for reasons that aren’t their fault, but you aren’t able to stop yourself from being frustrated and avoiding collaboration with them.</li>
+		<li>You are generally content with the day-to-day work of your job, but feel dissatisfied with the overall goal of the company you work for</li>
+		<li>You think that you “should” do something, but really don’t want to</li>
+		<li>You’ve been meaning to take a vacation for several years – you even have enough money set aside – but you haven’t gotten around to it.</li>
+		<li>You’re working on your dissertation, and everything is going fine – but when people ask you why you’re doing a PhD, you have a hard time remembering why you wanted to.</li>
+		</ul>
+		
+		<div class="step notInstructions" weight="1" duration="5">
+			<H3>Check your information-capture systems for bugs</H3>
+		</div>
+		<div class="step notInstructions" weight="1" duration="10">
+			<H3>Brainstorm bugs</H3>
+		</div>
+		<div class="step notInstructions" weight="1" duration="5">
+			<H3>Plan followup and next steps</H3>
+		</div>
+
+		<div class="worksheetPageBreak"></div>
+
+		<div class="blankPage onlyPrint">x</div>
 	</div>
 </div> <!-- }}} -->
 <div class="section placeholder" id="TriggerActionPlanning"> <!-- {{{ -->
