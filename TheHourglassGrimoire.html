@@ -496,7 +496,7 @@ function doWorksheetLayoutForPage(page)
 	// Amount of space to auto-allocate from. This is letter size minus 1 inch
 	// top and bottom margins minus half an inch fudge. The fudge is caused by
 	// failing to account for inter-element margins properly.
-	var pageHeightInches = 8;
+	var pageHeightInches = 7.8;
 	
 	var spaceToAllocate = pageHeightInches - totalFixedHeight;
 	var scaleFactor = spaceToAllocate / totalWeight;
@@ -897,7 +897,7 @@ $(document).ready(function()
 	<H1>The Hourglass Grimoire</H1>
 	<div class="attribution">
 		By James Babcock and Vincent Luczlow<br>
-		<div id="versionNumber">v0.2</div>
+		<div id="versionNumber">v0.3</div>
 		<br>
 		Based on<br>
 		The Center for Applied Rationality<br>
@@ -1311,7 +1311,7 @@ $(document).ready(function()
 		<div class="step notInstructions" weight="1" duration="5">
 			<H3>Check your information-capture systems for bugs</H3>
 		</div>
-		<div class="step notInstructions" weight="1" duration="10">
+		<div class="step notInstructions" weight="2" duration="10">
 			<H3>Brainstorm bugs</H3>
 		</div>
 		<div class="step notInstructions" weight="1" duration="5">
@@ -1430,9 +1430,13 @@ $(document).ready(function()
 
 		<div class="worksheetPageBreak"></div>
 
-		<div class="step" weight="1" duration="5">
-			<H3>Plan followup and next steps</H3>
+		<div class="step" weight="2" duration="5">
+			<H3 style="font-size: 1.5em;">Plan followup and next steps</H3>
 		</div>
+
+		<div class="worksheetPageBreak"></div>
+
+		<div class="blankPage onlyPrint">x</div>
 	</div>
 </div> <!-- }}} -->
 <div class="section placeholder" id="Systemization"> <!-- {{{ -->
