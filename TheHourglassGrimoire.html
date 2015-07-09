@@ -273,7 +273,7 @@ ul {
 	.timerInstructions {
 		padding-left: 8px;
 		font-weight: normal;
-		font-size: 11pt;
+		font-size: 10pt;
 	}
 	.timerDisplay {
 		display: none;
@@ -578,11 +578,15 @@ function addPageNumbers()
 {
 	var numberedPages = $(".numberedPage");
 	var pageNumbers = {};
+	var currentPageNumber = 1;
 
 	for(var ii=0; ii<numberedPages.length; ii++)
 	{
 		var pageElement = numberedPages[ii];
-		var pageNumber = ii+1;
+		if(!elementIsPrinted(pageElement))
+			continue;
+		
+		var pageNumber = currentPageNumber++;
 		var pageNumberElement = $('<div class="pageNumberContainer"><div class="pageNumber">'+pageNumber+'</div></div>');
 		pageNumberElement.prependTo(pageElement);
 		$(pageElement).attr("number", pageNumber);
@@ -604,10 +608,33 @@ function addPageNumbers()
 			continue;
 		
 		var targetID = target.substring(1);
-		var targetElement = document.getElementById(targetID);
+		var targetElement = getPrintElementById(targetID);
 		var pageNumber = getPageNumberFor(targetElement);
+		if(!pageNumber) pageNumber="-";
 		$('<span class="pageNumberDisplay">'+pageNumber+'</span>').appendTo(linkElement);
 	}
+}
+
+/// Get an element with the given ID, excluding elements that don't appear in print
+function getPrintElementById(id)
+{
+	// HACK
+	return $('#'+id+':not(.mixedRender)')[0];
+}
+
+
+function elementIsPrinted(element)
+{
+	var pos = element;
+	while(pos) {
+		var $pos = $(pos);
+		if($pos.hasClass("mixedRender")) return false;
+		if($pos.hasClass("noPrint")) return false;
+		if($pos.hasClass("placeholder")) return false;
+		
+		pos = pos.parentElement;
+	}
+	return true;
 }
 
 /// Get the page number of the page the element appears on, as a string for
@@ -904,7 +931,7 @@ $(document).ready(function()
 	<ul>
 		<li><a href="#GoalFactoring" class="tocPlaceholder pageNumberRef">Goal Factoring</a></li>
 		<li><a href="#PropagatingUrges" class="pageNumberRef">Propagating Urges</a></li>
-		<li><a href="#FindingAversions" class="tocPlaceholder pageNumberRef">Finding Aversions</a></li>
+		<li><a href="#FindingAversions" class="pageNumberRef">Finding Aversions</a></li>
 		<li><a href="#AversionFactoring" class="tocPlaceholder pageNumberRef">Aversion Factoring</a></li>
 		<li><a href="#Againstness" class="tocPlaceholder pageNumberRef">Againstness</a></li>
 	</ul>
@@ -913,6 +940,7 @@ $(document).ready(function()
 	<ul>
 		<li><a href="#YourBugsList" class="pageNumberRef">Your Bugs List</a></li>
 		<li><a href="#TriggerActionPlanning" class="tocPlaceholder pageNumberRef">Trigger-Action Planning</a></li>
+		<li><a href="#FindingOpportunitiesForSystemization" class="pageNumberRef">Finding Opportunities for Systemization</a></li>
 		<li><a href="#Systemization" class="tocPlaceholder pageNumberRef">Systemization</a></li>
 		<li><a href="#ComfortZoneExpansion" class="tocPlaceholder pageNumberRef">Comfort Zone Expansion</a></li>
 		<li><a href="#HammingPrompts" class="pageNumberRef">Hamming Prompts</a></li>
@@ -1303,6 +1331,108 @@ $(document).ready(function()
 
 	<div class="numberedPage">
 		<!-- TODO -->
+	</div>
+</div> <!-- }}} -->
+<div class="section" id="FindingOpportunitiesForSystemization"> <!-- {{{ -->
+	<div class="instructions sectionTitle numberedPage">
+		<H1>Finding Opportunities for Systemization</H1>
+		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
+	</div>
+
+	<div class="numberedPage instructions">
+		<H1 class="onlyPrint">Finding Opportunities for Systemization</H1>
+
+		<H2>What spending attention often feels like</H2>
+
+		<P>The central goal of everything done in systemization is to free your attention for its more valuable uses. In a moment you're going to do a brainstorm of areas where systemization might help. We'll start by noting common ways that using attention feel so you're more likely to think of them in your own life.</P>
+
+		<ul>
+		<li><B>Mental effort.</B> You need to remember to do something, or you have to do some mental math. This doesn't apply to things that you're so expert in that they're automatic even though they probably once took your attention and might take others' (e.g. understanding written words).</li>
+
+		<li><B>Willpower.</B> You don't want to write that email, but you have to, so you sit down and make yourself do it. This is especially costly if you have to keep choosing to make yourself do it (e.g. you know you could join some friends at a party once you choose to stop working on this email, and the thought repeatedly intrudes and requires another choice to focus).</li>
+
+		<li><B>Concentration.</B> When someone is talking nearby or your phone buzzes, you pay in attentional coinage to keep your mind on what you were doing. Using difficult, poorly designed devices or navigating tricky environments also levy a cognitive tax.</li>
+
+		<li><B>Decision-making.</B> Do you get dressed before or after breakfast? What should you wear? What are you going to have for lunch? Each decision costs attention, and mulling over a decision costs even more.</li>
+
+		<li><B>Task-switching.</B> If you're in the middle of writing something and someone starts a conversation with you, it takes a bit of a mental push to set aside your writing and attend to the conversation. This can be especially costly if there's background to the conversation you have to recall.</li>
+
+		<li><B>Multitasking.</B> If you're trying to read email on your phone while listening to a meeting, you're almost certainly paying massive attentional costs, and neither is happening very well relative to your abilities.</li>
+		</ul>
+	</div>
+
+	<div class="numberedPage notInstructions">
+		<H1 class="instructions onlyPrint">A brainstorm of things that might need systems</H1>
+		
+		<H2>Mental walkthrough of common routines</H2>
+		<P>Think about things you end up doing often. Where do you notice potential wastes of your attention in...</P>
+
+		<div class="step" weight="1" duration="1">
+			<H3>...your waking-up process (dealing with the alarm, finding glasses, etc.)?</H3>
+		</div>
+		<div class="step" weight="1" duration="1">
+			<H3>...your getting-dressed process?</H3>
+		</div>
+		<div class="step" weight="1" duration="1">
+			<H3>...your meals?</H3>
+		</div>
+		<div class="step" weight="1" duration="1">
+			<H3>...your routines for starting to use a computer (opening a browser &amp; specific websites, etc.)?</H3>
+		</div>
+
+		<div class="worksheetPageBreak"></div>
+
+		<div class="step" weight="1" duration="1">
+			<H3>...how you begin doing work (whatever you consider “work”)?</H3>
+		</div>
+		<div class="step" weight="1" duration="1">
+			<H3>...how you connect with friends (emails, Facebook exchanges, hosting events, etc.)?</H3>
+		</div>
+		<div class="step" weight="1" duration="1">
+			<H3>...how you engage in hobbies?</H3>
+		</div>
+		<div class="step" weight="1" duration="1">
+			<H3>...anything else?</H3>
+		</div>
+
+		<div class="worksheetPageBreak"></div>
+
+		<H2>Mental walkthrough of common dwellings</H2>
+		<P>Now try mentally going through spaces you frequently inhabit or navigate. What is awkward, difficult, annoying, or otherwise attention-sapping in...</P>
+
+		<div class="step" weight="1" duration="1">
+			<H3>...your bedroom?</H3>
+		</div>
+		<div class="step" weight="1" duration="1">
+			<H3>...your bathroom?</H3>
+		</div>
+		<div class="step" weight="1" duration="1">
+			<H3>...your kitchen?</H3>
+		</div>
+		<div class="step" weight="1" duration="1">
+			<H3>...any other space in your home?</H3>
+		</div>
+
+		<div class="worksheetPageBreak"></div>
+
+		<div class="step" weight="1" duration="1">
+			<H3>...your vehicle (car, bike, or whatever you use)?</H3>
+		</div>
+		<div class="step" weight="1" duration="1">
+			<H3>...your workspace (e.g. your desk and surrounding area if you have one)?</H3>
+		</div>
+		<div class="step" weight="1" duration="1">
+			<H3>...your bag (purse, backpack, suitcase, or whatever else like this you use, if any)?</H3>
+		</div>
+		<div class="step" weight="1" duration="1">
+			<H3>...any other space?</H3>
+		</div>
+
+		<div class="worksheetPageBreak"></div>
+
+		<div class="step" weight="1" duration="5">
+			<H3>Plan followup and next steps</H3>
+		</div>
 	</div>
 </div> <!-- }}} -->
 <div class="section placeholder" id="Systemization"> <!-- {{{ -->
