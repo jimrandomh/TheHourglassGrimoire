@@ -88,6 +88,17 @@ a.tocPlaceholder {
 	.sectionTitle {
 		text-align: center;
 	}
+
+	.sectionTitle ol {
+		text-align: left;
+	}
+
+	.sectionTitle.againstnessPage H1 {
+		padding-top: 1.5in;
+	}
+	.sectionTitle.againstnessPage .attribution {
+		padding-bottom: 1.5in;
+	}
 }
 
 .sectionTitle .attribution {
@@ -1024,7 +1035,7 @@ $(document).ready(function()
 		<li><a href="#PropagatingUrges" class="pageNumberRef">Propagating Urges</a></li>
 		<li><a href="#FindingAversions" class="pageNumberRef">Finding Aversions</a></li>
 		<li><a href="#AversionFactoring" class="pageNumberRef">Aversion Factoring</a></li>
-		<li><a href="#Againstness" class="tocPlaceholder pageNumberRef">Againstness</a></li>
+		<li><a href="#Againstness" class="pageNumberRef">Againstness</a></li>
 	</ul>
 
 	<H4>General Self-Improvement</H4>
@@ -1190,7 +1201,10 @@ $(document).ready(function()
 		<P>If so, you may wish to address these things first.</P>
 
 		<H3>2. Check Expectancy</H3>
+
 		<H3>3. Check for Aversion</H3>
+
+		<H3>4. Check for Trivial Inconveniences</H3>
 	</div>
 
 	<div class="numberedPage">
@@ -1491,11 +1505,19 @@ $(document).ready(function()
 	<div class="numberedPage">
 	</div>
 </div> <!-- }}} -->
-<div class="section placeholder" id="Againstness"> <!-- {{{ -->
-	<div class="instructions sectionTitle numberedPage">
+<div class="section" id="Againstness"> <!-- {{{ -->
+	<div class="instructions sectionTitle numberedPage againstnessPage">
 		<H1>Againstness</H1>
 		<div class="attribution">Excerpted from the CFAR April 2015 workshop.</div>
+
+		<ol>
+		<li><b>Open your body posture.</b> Uncross arms and legs, and create as much space between the bottom of your rib cage and the top of your pelvis as you can.</li>
+		<li><b>Take a low, slow, deep breath.</b> Relax as you exhale, and let the exhale go a little longer than the inhale.</li>
+		<li><b>Remember your feet.</b> Get into the experience of your feet as presented, and then let your awareness expand to include the rest of your body (but with peripheral body awareness, not with the “laser pointer” of zipping your focus of attention around).</li>
+		<li><b>Take another low, slow, deep breath.</b> And enjoy the feeling in your body.</li>
 	</div>
+
+	<div class="numberedPage"></div>
 </div> <!-- }}} -->
 <div class="section" id="YourBugsList"> <!-- {{{ -->
 	<div class="instructions sectionTitle numberedPage">
@@ -2011,7 +2033,7 @@ $(document).ready(function()
 		<P>When printed with two-sided printing and placed in a binder,
 		odd-numbered pages are "right" pages while even-numbered pages are
 		"left" pages. (These numbers refer to the raw numbering sequence, not
-		the one that is displayted in the corner of the page, since that
+		the one that is displayed in the corner of the page, since that
 		sequence skips some pages).</P>
 
 		<P>By convention, the title page of each section is a right page, and
