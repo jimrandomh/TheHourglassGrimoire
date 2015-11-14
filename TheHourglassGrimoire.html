@@ -254,7 +254,7 @@ ul {
 	text-align: right;
 }
 
-.saveButton {
+.saveButton, .feedbackButton {
 	margin-top: 15px;
 }
 
@@ -444,12 +444,20 @@ function addSaveButtons()
 
 		var buttons = $('<div class="buttonContainer noQuine">'
 			+'<button class="saveButton">Save</button>'
+			+'<button class="feedbackButton">Send Feedback</button>'
 			+'</div>');
 		$(".saveButton", buttons).click(function() {
 			saveWorksheet(section);
 		});
+		$(".feedbackButton", buttons).click(function() {
+			sendFeedbackOn(section);
+		});
 		buttons.appendTo(section);
 	})();
+}
+
+function openFeedbackEmail()
+{
 }
 
 /// For each .worksheetRender element, make it so that it is the first of
@@ -917,6 +925,16 @@ function saveWorksheet(section)
 	
 	// Bounce this back as a file download
 	triggerDownload(filename, saved.html());
+}
+
+function sendFeedbackOn(section)
+{
+	var sectionTitle = $($("h1", section)[0]).text();
+	var subject = "Hourglass Grimoire Feedback: "+sectionTitle;
+
+	var email = "the-hourglass-grimoire@googlegroups.com";
+	var mailto_link = 'mailto:' + email + '?subject='+encodeURIComponent(subject)
+	window = window.open(mailto_link, 'emailWindow')
 }
 
 function formatDateForFilename(date)
