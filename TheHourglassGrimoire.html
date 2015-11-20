@@ -223,7 +223,9 @@ a.tocPlaceholder {
 	box-sizing: border-box;
 	border-radius: 5px;
 	margin: 5px;
+	background: white;
 	box-shadow: 2px 2px 2px rgba(0,0,0,0.5);
+	-webkit-filter: blur(0); /* Workaround for Webkit bug https://code.google.com/p/chromium/issues/detail?id=174583 */
 }
 
 @media print {
@@ -280,7 +282,9 @@ H3 {
 	border-radius: 5px;
 	margin: 5px;
 	text-align: center;
+	background: white;
 	box-shadow: 2px 2px 2px rgba(0,0,0,0.5);
+	-webkit-filter: blur(0); /* Workaround for Webkit bug https://code.google.com/p/chromium/issues/detail?id=174583 */
 }
 
 .techniqueHeading2 {
