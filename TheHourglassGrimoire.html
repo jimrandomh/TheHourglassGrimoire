@@ -1109,7 +1109,7 @@ function renderFlowChart()
 
 function connectFlowChart(jsPlumbInstance, source, target)
 {
-	jsPlumbInstance.connect({
+	var connector = jsPlumbInstance.connect({
 		source: source,
 		target: target,
 		anchors: ["Bottom", "Top"],
@@ -1119,11 +1119,15 @@ function connectFlowChart(jsPlumbInstance, source, target)
 		},
 		endpoint: "Blank"
 	});
+
+	// Disable drag+drop
+	connector.endpoints[0].setEnabled(false);
+	connector.endpoints[1].setEnabled(false);
 }
 
 function connectFlowChartLeft(jsPlumbInstance, source, target)
 {
-	jsPlumbInstance.connect({
+	var connector = jsPlumbInstance.connect({
 		source: source,
 		target: target,
 		anchors: ["Bottom", "Left"],
@@ -1134,6 +1138,10 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 		},
 		endpoint: "Blank"
 	});
+
+	// Disable drag+drop
+	connector.endpoints[0].setEnabled(false);
+	connector.endpoints[1].setEnabled(false);
 }
 
 <!-- }}} --></script>
