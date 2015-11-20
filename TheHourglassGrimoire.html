@@ -162,9 +162,22 @@ a.tocPlaceholder {
 		position: relative;
 		text-decoration: none;
 	}
-	.pageNumberDisplay {
+	#TableOfContents .pageNumberDisplay {
 		position: absolute;
 		left: 300px;
+	}
+	#TableOfContents .pageNumberDisplay::before {
+		content: "";
+	}
+	#TableOfContents .pageNumberDisplay::after {
+		content: "";
+	}
+
+	.pageNumberDisplay::before {
+		content: " (";
+	}
+	.pageNumberDisplay::after {
+		content: ")";
 	}
 
 	a {
@@ -193,6 +206,20 @@ a.tocPlaceholder {
 }
 .clearColumns {
 	clear: both;
+}
+.smallSpacer {
+	height: 40px;
+}
+.largeSpacer {
+	height: 80px;
+}
+
+.bubble {
+	border: 1px solid black;
+	padding: 5px;
+	box-sizing: border-box;
+	border-radius: 5px;
+	margin: 5px;
 }
 
 @media print {
@@ -1041,7 +1068,7 @@ function renderFlowChart()
 	];
 	var jsPlumbInstance = jsPlumb.getInstance({
 		EndpointStyle: { radius: 5 },
-		Connector: [ "Straight" ],
+		Connector: [ "Straight", { }],
 		ConnectionOverlays: arrow,
 		Container: "ChoosingATechnque"
 	});
@@ -1049,6 +1076,16 @@ function renderFlowChart()
 	connectFlowChart(jsPlumbInstance, "chartFeelingDemotivated", "chartWellBeingChecklist");
 	connectFlowChart(jsPlumbInstance, "chartWellBeingChecklist", "chartAversion");
 	connectFlowChart(jsPlumbInstance, "chartWellBeingChecklist", "chartNebulousness");
+	connectFlowChart(jsPlumbInstance, "chartSelfImprovement", "chartSelfImprovementGeneral");
+	connectFlowChart(jsPlumbInstance, "chartSelfImprovement", "chartSelfImprovementSpecific");
+
+	connectFlowChart(jsPlumbInstance, "chartStrategicDecision", "chartRefiningAPlan");
+	connectFlowChart(jsPlumbInstance, "chartStrategicDecision", "chartMakingADecision");
+
+	connectFlowChartLeft(jsPlumbInstance, "chartObservation", "chartObservedBug");
+	connectFlowChartLeft(jsPlumbInstance, "chartObservation", "chartObservedBrightSpot");
+	connectFlowChartLeft(jsPlumbInstance, "chartObservation", "chartObservedMotivation");
+	connectFlowChartLeft(jsPlumbInstance, "chartObservation", "chartObservedWorld");
 }
 
 function connectFlowChart(jsPlumbInstance, source, target)
@@ -1057,7 +1094,26 @@ function connectFlowChart(jsPlumbInstance, source, target)
 		source: source,
 		target: target,
 		anchors: ["Bottom", "Top"],
-		endpoint: "Rectangle"
+		paintStyle: {
+			lineWidth: 2,
+			strokeStyle: "#000000"
+		},
+		endpoint: "Blank"
+	});
+}
+
+function connectFlowChartLeft(jsPlumbInstance, source, target)
+{
+	jsPlumbInstance.connect({
+		source: source,
+		target: target,
+		anchors: ["Bottom", "Left"],
+		connector: [ "Flowchart", { }],
+		paintStyle: {
+			lineWidth: 2,
+			strokeStyle: "#000000"
+		},
+		endpoint: "Blank"
 	});
 }
 
@@ -1159,52 +1215,128 @@ function connectFlowChart(jsPlumbInstance, source, target)
 <div id="ChoosingATechnique" class="numberedPage FrontMatter"> <!-- {{{ -->
 	<H1>Choosing a Technique</H1>
 
-	<div id="Flowchart" style="position: absolute">
+	<div id="Flowchart" style="position: absolute; width: 800px">
 		<div class="leftColumn">
 			<div class="techniqueHeading" id="chartFeelingDemotivated">Feeling Demotivated</div>
-			<div style="height:40px"></div>
-			<div id="chartWellBeingChecklist" style="text-align: center">Well-Being Checklist</div>
-			<div style="height:40px"></div>
-			<div class="leftColumn">
-				<div class="techniqueHeading2" id="chartAversion">Aversion</div>
+			<div class="smallSpacer"></div>
+			<div class="bubble" id="chartWellBeingChecklist" style="width: 250px; margin: 0 auto;">
+				<div style="text-align: center">Well-Being Checklist</div>
+				<H3>Physical</H3>
 				<ul>
-					<li>Aversion Factoring</li>
+					<li>Tired?</li>
+					<li>Hungry or thirsty?</li>
+					<li>Caffeine deprived?</li>
+					<li>Ill?</li>
+					<li>Too hot or cold?</li>
+					<li>Uncomfortable?</li>
+				</ul>
+				<H3>Mental</H3>
+				<ul>
+					<li>Distracted?</li>
+					<li>Too much in working memory?</li>
 				</ul>
 			</div>
+			<div class="smallSpacer"></div>
+			<div class="leftColumn">
+				<div class="bubble" id="chartAversion">
+					<div class="techniqueHeading2">Aversion</div>
+					<ul>
+						<li><a href="#AversionFactoring" class="pageNumberRef">Aversion Factoring</a></li>
+					</ul>
+				</div>
+			</div>
 			<div class="rightColumn">
-				<div class="techniqueHeading2" id="chartNebulousness">Nebulousness</div>
-				<ul>
-					<li>Focused Grit</li>
-				</ul>
+				<div class="bubble" id="chartNebulousness">
+					<div class="techniqueHeading2">Nebulousness</div>
+					<ul>
+						<li><a href="#FocusedGrit" class="pageNumberRef">Focused Grit</a></li>
+					</ul>
+				</div>
 			</div>
 			<div class="clearColumns"></div>
 
-			<div class="techniqueHeading">Checking on a Plan</div>
-			<div class="techniqueHeading">Responding to Some Other Observation</div>
+			<!-- ========================================================== -->
+
+			<div class="techniqueHeading">Made an Observation</div>
+			<div id="chartObservation" style="width:1px; margin-left: 60px"></div>
+
+			<div style="margin-left: 100px">
+				<div class="bubble" id="chartObservedBug">
+					...Of a bug
+					<ul>
+						<li>Frame-By-Frame Debugging</li>
+					</ul>
+				</div>
+				<div class="bubble" id="chartObservedBrightSpot">
+					...Of a bright spot
+					<ul>
+						<li>Capturing Bright Spots</li>
+					</ul>
+				</div>
+				<div class="bubble" id="chartObservedMotivation">
+					...Of a motiation or aversion
+					<ul>
+						<li><a href="#GoalFactoring" class="pageNumberRef">Goal Factoring</a></li>
+						<li><a href="#AversionFactoring" class="pageNumberRef">Aversion Factoring</a></li>
+						<li><a href="#PropagatingUrges" class="pageNumberRef">Propagating Urges</a></li>
+					</ul>
+				</div>
+				<div class="bubble" id="chartObservedWorld">
+					...Of the world
+					<ul>
+						<li>Making Large Updates</li>
+						<li>Crystallizing Concepts</li>
+					</ul>
+				</div>
+			</div>
 		</div>
 		<div class="rightColumn">
-			<div class="techniqueHeading">Self Improvement</div>
+			<div class="techniqueHeading" id="chartSelfImprovement">Self Improvement</div>
+			<div class="smallSpacer"></div>
 			<div class="leftColumn">
-				<div class="techniqueHeading2">General</div>
-				<i>I don't know what to work on.</i>
-				<ul>
-					<li>Hamming Prompts</li>
-					<li>Identifying Goals</li>
-					<li>Systemization</li>
-				</ul>
+				<div class="bubble" id="chartSelfImprovementGeneral">
+					<div class="techniqueHeading2">General</div>
+					<i>I don't know what to work on.</i>
+					<ul>
+						<li><a href="#HammingPrompts" class="pageNumberRef">Hamming Prompts</a></li>
+						<li>Identifying Goals</li>
+						<li><a href="#FindingOpportunitiesForSystemization" class="pageNumberRef">Finding Opportunities for Systemization</a></li>
+					</ul>
+				</div>
 			</div>
 			<div class="rightColumn">
-				<div class="techniqueHeading2">Specific</div>
-				<i>I have a goal to work towards.</i>
-				<ul>
-					<li>Turbocharging</li>
-					<li>CoZE</li>
-					<li><a href="#FocusedGrit" class="pageNumberRef">Focused Grit</a></li>
-				</ul>
+				<div class="bubble" id="chartSelfImprovementSpecific">
+					<div class="techniqueHeading2" id="">Specific</div>
+					<i>I have a goal to work towards.</i>
+					<ul>
+						<li>Turbocharging</li>
+						<li>CoZE</li>
+						<li><a href="#FocusedGrit" class="pageNumberRef">Focused Grit</a></li>
+					</ul>
+				</div>
 			</div>
 			<div class="clearColumns"></div>
 
-			<div class="techniqueHeading">Decision to Make</div>
+			<!-- ========================================================== -->
+
+			<div class="techniqueHeading" id="chartStrategicDecision">Strategizing</div>
+			<div class="smallSpacer"></div>
+			<div class="leftColumn">
+				<div class="bubble" id="chartRefiningAPlan">
+					<div class="techniqueHeading2">Refining a Plan</div>
+					<ul>
+					<li><a href="#Murphyjitsu" class="pageNumberRef">Murphy-jitsu</a></li>
+					</ul>
+				</div>
+			</div>
+			<div class="rightColumn">
+				<div class="bubble" id="chartMakingADecision">
+					<div class="techniqueHeading2">Making a Decision</div>
+					<ul>
+						<li><a href="#MakingHardDecisions" class="tocPlaceholder pageNumberRef">Making Hard Decisions</a></li>
+					</ul>
+				</div>
+			</div>
 		</div>
 		<div class="clearColumns"></div>
 	</div>
