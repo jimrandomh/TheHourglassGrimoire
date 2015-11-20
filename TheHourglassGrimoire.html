@@ -216,10 +216,16 @@ a.tocPlaceholder {
 
 .bubble {
 	border: 1px solid black;
-	padding: 5px;
+	padding-left: 5px;
+	padding-right: 5px;
+	padding-top: 5px;
+	padding-bottom: 5px;
 	box-sizing: border-box;
 	border-radius: 5px;
 	margin: 5px;
+	background: white;
+	box-shadow: 2px 2px 2px rgba(0,0,0,0.5);
+	-webkit-filter: blur(0); /* Workaround for Webkit bug https://code.google.com/p/chromium/issues/detail?id=174583 */
 }
 
 @media print {
@@ -266,20 +272,33 @@ H3 {
 }
 
 .techniqueHeading {
+	border: 1px solid black;
+	height: 35px;
+	vertical-align: middle;
 	font-weight: bold;
 	text-decoration: underline;
-	font-size: 13pt;
+	padding: 5px;
+	box-sizing: border-box;
+	border-radius: 5px;
+	margin: 5px;
 	text-align: center;
-	padding-top: 15px;
+	background: white;
+	box-shadow: 2px 2px 2px rgba(0,0,0,0.5);
+	-webkit-filter: blur(0); /* Workaround for Webkit bug https://code.google.com/p/chromium/issues/detail?id=174583 */
 }
 
 .techniqueHeading2 {
 	font-weight: bold;
 	text-decoration: underline;
-	font-size: 11pt;
 	text-align: center;
-	padding-top: 5px;
+	padding-top: 0;
 	padding-left: 5px;
+}
+
+.denseList {
+	margin-top: 0;
+	margin-bottom: 0;
+	padding-left: 20px;
 }
 
 .timerDisplay {
@@ -416,6 +435,10 @@ if(B||C){var D=z+"_"+A,E=v[D],F=y.sourceId==a?1:0;B&&!l[z]&&(l[z]={top:[],right:
 
 var numCopiesOfEachWorksheet = 3;
 
+/// Whether any data has been entered. Set when you type into any text box, and
+/// determines whether to prompt on tab close/reload
+var dataEntered = false;
+
 function makeInstructionAndWorksheetRenderings()
 {
 	var sections = $(".section");
@@ -494,6 +517,9 @@ function addTimersAndTextareas()
 				timer.unpause();
 			});
 		}
+		$(textarea).on("keydown", function() {
+			dataEntered = true;
+		});
 		textarea.appendTo(step);
 		autoExpandTextarea(textarea);
 	}})();
@@ -1046,8 +1072,9 @@ $(document).ready(function()
 	
 	window.onbeforeunload = function(event)
 	{
-		// TODO: Only pop this up if you have unsaved data
-		return "Are you sure you want to close this page?";
+		if(dataEntered) {
+			return "You have entered text.";
+		}
 	}
 
 	var numWorksheetCopiesConfig = $('[name="numPrintCopies"]');
@@ -1090,7 +1117,7 @@ function renderFlowChart()
 
 function connectFlowChart(jsPlumbInstance, source, target)
 {
-	jsPlumbInstance.connect({
+	var connector = jsPlumbInstance.connect({
 		source: source,
 		target: target,
 		anchors: ["Bottom", "Top"],
@@ -1100,11 +1127,15 @@ function connectFlowChart(jsPlumbInstance, source, target)
 		},
 		endpoint: "Blank"
 	});
+
+	// Disable drag+drop
+	connector.endpoints[0].setEnabled(false);
+	connector.endpoints[1].setEnabled(false);
 }
 
 function connectFlowChartLeft(jsPlumbInstance, source, target)
 {
-	jsPlumbInstance.connect({
+	var connector = jsPlumbInstance.connect({
 		source: source,
 		target: target,
 		anchors: ["Bottom", "Left"],
@@ -1115,6 +1146,10 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 		},
 		endpoint: "Blank"
 	});
+
+	// Disable drag+drop
+	connector.endpoints[0].setEnabled(false);
+	connector.endpoints[1].setEnabled(false);
 }
 
 <!-- }}} --></script>
@@ -1216,13 +1251,13 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 	<H1>Choosing a Technique</H1>
 
 	<div id="Flowchart" style="position: absolute; width: 800px">
-		<div class="leftColumn">
+		<div class="leftColumn" style="width: 390px">
 			<div class="techniqueHeading" id="chartFeelingDemotivated">Feeling Demotivated</div>
 			<div class="smallSpacer"></div>
 			<div class="bubble" id="chartWellBeingChecklist" style="width: 250px; margin: 0 auto;">
-				<div style="text-align: center">Well-Being Checklist</div>
-				<H3>Physical</H3>
-				<ul>
+				<div class="techniqueHeading2">Well-Being Checklist</div>
+				<div>Physical</div>
+				<ul class="denseList">
 					<li>Tired?</li>
 					<li>Hungry or thirsty?</li>
 					<li>Caffeine deprived?</li>
@@ -1230,8 +1265,8 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 					<li>Too hot or cold?</li>
 					<li>Uncomfortable?</li>
 				</ul>
-				<H3>Mental</H3>
-				<ul>
+				<div>Mental</div>
+				<ul class="denseList">
 					<li>Distracted?</li>
 					<li>Too much in working memory?</li>
 				</ul>
@@ -1240,7 +1275,7 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 			<div class="leftColumn">
 				<div class="bubble" id="chartAversion">
 					<div class="techniqueHeading2">Aversion</div>
-					<ul>
+					<ul class="denseList">
 						<li><a href="#AversionFactoring" class="pageNumberRef">Aversion Factoring</a></li>
 					</ul>
 				</div>
@@ -1248,34 +1283,36 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 			<div class="rightColumn">
 				<div class="bubble" id="chartNebulousness">
 					<div class="techniqueHeading2">Nebulousness</div>
-					<ul>
+					<ul class="denseList">
 						<li><a href="#FocusedGrit" class="pageNumberRef">Focused Grit</a></li>
 					</ul>
 				</div>
 			</div>
 			<div class="clearColumns"></div>
 
+			<div class="smallSpacer"></div>
 			<!-- ========================================================== -->
 
 			<div class="techniqueHeading">Made an Observation</div>
-			<div id="chartObservation" style="width:1px; margin-left: 60px"></div>
+			<div id="chartObservation" style="width:1px; height: 0; margin-left: 60px"></div>
+			<div style="height: 5px;"></div>
 
 			<div style="margin-left: 100px">
 				<div class="bubble" id="chartObservedBug">
 					...Of a bug
-					<ul>
+					<ul class="denseList">
 						<li>Frame-By-Frame Debugging</li>
 					</ul>
 				</div>
 				<div class="bubble" id="chartObservedBrightSpot">
 					...Of a bright spot
-					<ul>
+					<ul class="denseList">
 						<li>Capturing Bright Spots</li>
 					</ul>
 				</div>
 				<div class="bubble" id="chartObservedMotivation">
 					...Of a motiation or aversion
-					<ul>
+					<ul class="denseList">
 						<li><a href="#GoalFactoring" class="pageNumberRef">Goal Factoring</a></li>
 						<li><a href="#AversionFactoring" class="pageNumberRef">Aversion Factoring</a></li>
 						<li><a href="#PropagatingUrges" class="pageNumberRef">Propagating Urges</a></li>
@@ -1283,21 +1320,21 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 				</div>
 				<div class="bubble" id="chartObservedWorld">
 					...Of the world
-					<ul>
-						<li>Making Large Updates</li>
+					<ul class="denseList">
+						<li><a href="#MakingLargeUpdates" class="pageNumberRef">Making Large Updates</a></li>
 						<li>Crystallizing Concepts</li>
 					</ul>
 				</div>
 			</div>
 		</div>
-		<div class="rightColumn">
+		<div class="rightColumn" style="width: 390px">
 			<div class="techniqueHeading" id="chartSelfImprovement">Self Improvement</div>
 			<div class="smallSpacer"></div>
 			<div class="leftColumn">
 				<div class="bubble" id="chartSelfImprovementGeneral">
 					<div class="techniqueHeading2">General</div>
-					<i>I don't know what to work on.</i>
-					<ul>
+					(Not sure what to work on.)
+					<ul class="denseList">
 						<li><a href="#HammingPrompts" class="pageNumberRef">Hamming Prompts</a></li>
 						<li>Identifying Goals</li>
 						<li><a href="#FindingOpportunitiesForSystemization" class="pageNumberRef">Finding Opportunities for Systemization</a></li>
@@ -1307,8 +1344,8 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 			<div class="rightColumn">
 				<div class="bubble" id="chartSelfImprovementSpecific">
 					<div class="techniqueHeading2" id="">Specific</div>
-					<i>I have a goal to work towards.</i>
-					<ul>
+					(Have a goal in mind.)
+					<ul class="denseList">
 						<li>Turbocharging</li>
 						<li>CoZE</li>
 						<li><a href="#FocusedGrit" class="pageNumberRef">Focused Grit</a></li>
@@ -1317,6 +1354,7 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 			</div>
 			<div class="clearColumns"></div>
 
+			<div class="smallSpacer"></div>
 			<!-- ========================================================== -->
 
 			<div class="techniqueHeading" id="chartStrategicDecision">Strategizing</div>
@@ -1324,15 +1362,15 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 			<div class="leftColumn">
 				<div class="bubble" id="chartRefiningAPlan">
 					<div class="techniqueHeading2">Refining a Plan</div>
-					<ul>
-					<li><a href="#Murphyjitsu" class="pageNumberRef">Murphy-jitsu</a></li>
+					<ul class="denseList">
+						<li><a href="#Murphyjitsu" class="pageNumberRef">Murphy-jitsu</a></li>
 					</ul>
 				</div>
 			</div>
 			<div class="rightColumn">
 				<div class="bubble" id="chartMakingADecision">
 					<div class="techniqueHeading2">Making a Decision</div>
-					<ul>
+					<ul class="denseList">
 						<li><a href="#MakingHardDecisions" class="tocPlaceholder pageNumberRef">Making Hard Decisions</a></li>
 					</ul>
 				</div>
