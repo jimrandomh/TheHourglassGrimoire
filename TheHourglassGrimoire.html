@@ -435,6 +435,10 @@ if(B||C){var D=z+"_"+A,E=v[D],F=y.sourceId==a?1:0;B&&!l[z]&&(l[z]={top:[],right:
 
 var numCopiesOfEachWorksheet = 3;
 
+/// Whether any data has been entered. Set when you type into any text box, and
+/// determines whether to prompt on tab close/reload
+var dataEntered = false;
+
 function makeInstructionAndWorksheetRenderings()
 {
 	var sections = $(".section");
@@ -513,6 +517,9 @@ function addTimersAndTextareas()
 				timer.unpause();
 			});
 		}
+		$(textarea).on("keydown", function() {
+			dataEntered = true;
+		});
 		textarea.appendTo(step);
 		autoExpandTextarea(textarea);
 	}})();
@@ -1065,8 +1072,9 @@ $(document).ready(function()
 	
 	window.onbeforeunload = function(event)
 	{
-		// TODO: Only pop this up if you have unsaved data
-		return "Are you sure you want to close this page?";
+		if(dataEntered) {
+			return "You have entered text.";
+		}
 	}
 
 	var numWorksheetCopiesConfig = $('[name="numPrintCopies"]');
