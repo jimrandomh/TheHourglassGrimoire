@@ -224,14 +224,23 @@ a.tocPlaceholder {
 	border-radius: 5px;
 	margin: 5px;
 	background: white;
-	box-shadow: 2px 2px 2px rgba(0,0,0,0.5);
-	-webkit-filter: blur(0); /* Workaround for Webkit bug https://code.google.com/p/chromium/issues/detail?id=174583 */
+}
+
+/*
+ * Due to a bug in WebKit, we can't have box-shadows in print or else the
+ * element will get covered up by a big black box.
+ * https://code.google.com/p/chromium/issues/detail?id=174583
+*/
+@media screen {
+	.bubble, .techniqueHeading {
+		box-shadow: 2px 2px 2px rgba(0,0,0,0.5);
+	}
 }
 
 @media print {
 	body {
 		margin: 0;
-		font-size: 10pt;
+		font-size: 12pt;
 	}
 	@page {
 		margin-left: 1in;
@@ -287,8 +296,6 @@ H3 {
 	margin: 5px;
 	text-align: center;
 	background: white;
-	box-shadow: 2px 2px 2px rgba(0,0,0,0.5);
-	-webkit-filter: blur(0); /* Workaround for Webkit bug https://code.google.com/p/chromium/issues/detail?id=174583 */
 }
 
 .techniqueHeading2 {
@@ -1322,10 +1329,48 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 				</div>
 			</div>
 			<div class="clearColumns"></div>
+		</div>
+		
+		<!-- ============================================================== -->
 
+		<div class="rightColumn" style="width: 390px">
+			<div class="techniqueHeading" id="chartSelfImprovement">Self Improvement</div>
 			<div class="smallSpacer"></div>
-			<!-- ========================================================== -->
+			<div class="bubble" id="chartSelfImprovementBranch" style="width: 250px; margin: 0 auto;">
+				Do you have a specific skill in mind, or are you looking for
+				self-improvement ideas in general?
+			</div>
+			<div class="smallSpacer"></div>
+			<div class="leftColumn">
+				<div class="bubble" id="chartSelfImprovementGeneral">
+					<div class="techniqueHeading2">General</div>
+					<ul class="denseList">
+						<li><a href="#HammingPrompts" class="pageNumberRef">Hamming Prompts</a></li>
+						<li><a href="#YourBugsList" class="pageNumberRef">Your Bugs List</a></li>
+						<li>Identifying Goals</li>
+						<li><a href="#Systemization" class="pageNumberRef">Systemization</a></li>
+						<li><a href="#FindingOpportunitiesForSystemization" class="pageNumberRef">Finding Opportunities for Systemization</a></li>
+					</ul>
+				</div>
+			</div>
+			<div class="rightColumn">
+				<div class="bubble" id="chartSelfImprovementSpecific">
+					<div class="techniqueHeading2" id="">Specific</div>
+					<ul class="denseList">
+						<li>Turbocharging</li>
+						<li>CoZE</li>
+						<li><a href="#FocusedGrit" class="pageNumberRef">Focused Grit</a></li>
+					</ul>
+				</div>
+			</div>
+			<div class="clearColumns"></div>
+		</div>
+		<div class="clearColumns"></div>
+		<div class="smallSpacer"></div>
+		
+		<!-- ============================================================== -->
 
+		<div class="leftColumn" style="width: 390px">
 			<div class="techniqueHeading">Made an Observation</div>
 			<div id="chartObservation" style="width:1px; height: 0; margin-left: 60px"></div>
 			<div style="height: 5px;"></div>
@@ -1360,41 +1405,10 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 				</div>
 			</div>
 		</div>
+
+		<!-- ============================================================== -->
+
 		<div class="rightColumn" style="width: 390px">
-			<div class="techniqueHeading" id="chartSelfImprovement">Self Improvement</div>
-			<div class="smallSpacer"></div>
-			<div class="bubble" id="chartSelfImprovementBranch" style="width: 250px; margin: 0 auto;">
-				Do you have a specific skill in mind, or are you looking for
-				self-improvement ideas in general?
-			</div>
-			<div class="smallSpacer"></div>
-			<div class="leftColumn">
-				<div class="bubble" id="chartSelfImprovementGeneral">
-					<div class="techniqueHeading2">General</div>
-					<ul class="denseList">
-						<li><a href="#HammingPrompts" class="pageNumberRef">Hamming Prompts</a></li>
-						<li><a href="#YourBugsList" class="pageNumberRef">Your Bugs List</a></li>
-						<li>Identifying Goals</li>
-						<li><a href="#Systemization" class="pageNumberRef">Systemization</a></li>
-						<li><a href="#FindingOpportunitiesForSystemization" class="pageNumberRef">Finding Opportunities for Systemization</a></li>
-					</ul>
-				</div>
-			</div>
-			<div class="rightColumn">
-				<div class="bubble" id="chartSelfImprovementSpecific">
-					<div class="techniqueHeading2" id="">Specific</div>
-					<ul class="denseList">
-						<li>Turbocharging</li>
-						<li>CoZE</li>
-						<li><a href="#FocusedGrit" class="pageNumberRef">Focused Grit</a></li>
-					</ul>
-				</div>
-			</div>
-			<div class="clearColumns"></div>
-
-			<div class="smallSpacer"></div>
-			<!-- ========================================================== -->
-
 			<div class="techniqueHeading" id="chartStrategicDecision">Strategizing</div>
 			<div class="smallSpacer"></div>
 			<div class="leftColumn">
@@ -1409,12 +1423,11 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 				<div class="bubble" id="chartMakingADecision">
 					<div class="techniqueHeading2">Making a Decision</div>
 					<ul class="denseList">
-						<li><a href="#MakingHardDecisions" class="tocPlaceholder pageNumberRef">Making Hard Decisions</a></li>
+						<li><a href="#MakingHardDecisions" class="pageNumberRef">Making Hard Decisions</a></li>
 					</ul>
 				</div>
 			</div>
 		</div>
-		<div class="clearColumns"></div>
 	</div>
 	<div style="height:900px"></div>
 </div> <!-- }}} -->
