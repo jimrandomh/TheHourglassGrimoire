@@ -241,6 +241,10 @@ a.tocPlaceholder {
 	}
 }
 
+#Flowchart {
+	font-size: 10pt;
+}
+
 H1 {
 	font-size: 20pt;
 }
@@ -1101,8 +1105,8 @@ function renderFlowChart()
 	});
 
 	connectFlowChart(jsPlumbInstance, "chartFeelingDemotivated", "chartWellBeingChecklist");
-	connectFlowChart(jsPlumbInstance, "chartWellBeingChecklist", "chartAversion");
 	connectFlowChart(jsPlumbInstance, "chartWellBeingChecklist", "chartNebulousness");
+	connectFlowChart(jsPlumbInstance, "chartWellBeingChecklist", "chartExpectancy");
 	connectFlowChart(jsPlumbInstance, "chartSelfImprovement", "chartSelfImprovementGeneral");
 	connectFlowChart(jsPlumbInstance, "chartSelfImprovement", "chartSelfImprovementSpecific");
 
@@ -1230,16 +1234,15 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 		<li><a href="#FocusedGrit" class="pageNumberRef">Focused Grit</a></li>
 		<li><a href="#ValueOfInformation" class="tocPlaceholder pageNumberRef">Value of Information</a></li>
 		<li><a href="#MakingLargeUpdates" class="pageNumberRef">Making Large Updates</a></li>
+		<li><a href="#CrystallizingConcepts" class="pageNumberRef">Crystallizing Concepts</a></li>
 	</ul>
 
 	<H4>Planned Expansions</H4>
 	<ul>
-		<li>Crystallizing Concepts</li>
 		<li>Goal Setting</li>
 		<li>Alief Factoring</li>
 		<li>Detecting Fading Social Connections</li>
 		<li>Defusing Anger</li>
-		<li>Well-Being Checklist</li>
 	</ul>
 	
 	<H4>Appendices</H4>
@@ -1255,8 +1258,8 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 			<div class="techniqueHeading" id="chartFeelingDemotivated">Feeling Demotivated</div>
 			<div class="smallSpacer"></div>
 			<div class="bubble" id="chartWellBeingChecklist" style="width: 250px; margin: 0 auto;">
-				<div class="techniqueHeading2">Well-Being Checklist</div>
-				<div>Physical</div>
+				<div class="techniqueHeading2">A Checklist</div>
+				<div>Physical Well-Being</div>
 				<ul class="denseList">
 					<li>Tired?</li>
 					<li>Hungry or thirsty?</li>
@@ -1265,14 +1268,28 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 					<li>Too hot or cold?</li>
 					<li>Uncomfortable?</li>
 				</ul>
-				<div>Mental</div>
+				<div>Mental State</div>
 				<ul class="denseList">
 					<li>Distracted?</li>
 					<li>Too much in working memory?</li>
 				</ul>
+				<div>Task</div>
+				<ul class="denseList">
+					<li>Deep down, do you expect a good result from this?</li>
+					<li>Is this something you have flinched from or that feels aversive?</li>
+					<li>Is the next step clear?</li>
+					<li>Are there trivial inconviences?</li>
+				</ul>
 			</div>
 			<div class="smallSpacer"></div>
 			<div class="leftColumn">
+				<div class="bubble" id="chartExpectancy">
+					<div class="techniqueHeading2">Expectancy</div>
+					<ul class="denseList">
+						<li><a href="#GoalFactoring" class="pageNumberRef">Goal Factoring</a></li>
+						<li><a href="#PropagatingUrges" class="pageNumberRef">Propagating Urges</a></li>
+					</ul>
+				</div>
 				<div class="bubble" id="chartAversion">
 					<div class="techniqueHeading2">Aversion</div>
 					<ul class="denseList">
@@ -1284,6 +1301,14 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 				<div class="bubble" id="chartNebulousness">
 					<div class="techniqueHeading2">Nebulousness</div>
 					<ul class="denseList">
+						<li><a href="#FocusedGrit" class="pageNumberRef">Focused Grit</a></li>
+						<li><a href="#MakingHardDecisions" class="pageNumberRef">Making Hard Decisions</a></li>
+					</ul>
+				</div>
+				<div class="bubble" id="Trivial Inconveniences">
+					<div class="techniqueHeading2">Trivial Inconveniences</div>
+					<ul class="denseList">
+						<li><a href="#TriggerActionPlanning" class="pageNumberRef">Trigger Action Planning</a></li>
 						<li><a href="#FocusedGrit" class="pageNumberRef">Focused Grit</a></li>
 					</ul>
 				</div>
@@ -1311,7 +1336,7 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 					</ul>
 				</div>
 				<div class="bubble" id="chartObservedMotivation">
-					...Of a motiation or aversion
+					...Of a motivation or aversion
 					<ul class="denseList">
 						<li><a href="#GoalFactoring" class="pageNumberRef">Goal Factoring</a></li>
 						<li><a href="#AversionFactoring" class="pageNumberRef">Aversion Factoring</a></li>
@@ -1378,7 +1403,7 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 		</div>
 		<div class="clearColumns"></div>
 	</div>
-	<div style="height:1000px"></div>
+	<div style="height:900px"></div>
 </div> <!-- }}} -->
 <div id="Preface" class="FrontMatter"> <!-- {{{ -->
 	<div class="numberedPage">
@@ -2296,6 +2321,33 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 		<div class="step" weight="1" duration="5">
 			<H3>7. Check for confusion.</H3>
 			<P class="instructions">Do you notice anything which still seems to not make sense? Are there new questions that now require thought?</P>
+		</div>
+	</div>
+</div> <!-- }}} -->
+<div class="section" id="CrystallizingConcepts"> <!-- {{{ -->
+	<div class="instructions sectionTitle numberedPage">
+		<H1>Crystallizing Concepts</H1>
+		<div class="attribution">By James Babcock.</div>
+	</div>
+
+	<div class="numberedPage">
+		<H1 class="onlyPrint">Crystallizing Concepts</H1>
+
+		<P>
+			Sometimes, when thinking about a topic you notice a distinction which
+		</P>
+		
+		<div class="step" weight="1" duration="3">
+			<H3>1. Identify the Distinction.</H3>
+		</div>
+		<div class="step" weight="1" duration="5">
+			<H3>2. Come up with examples</H3>
+		</div>
+		<div class="step" weight="1" duration="5">
+			<H3>3. Check for pre-existing work</H3>
+		</div>
+		<div class="step" weight="1" duration="5">
+			<H3>4. Give the distinction a name</H3>
 		</div>
 	</div>
 </div> <!-- }}} -->
