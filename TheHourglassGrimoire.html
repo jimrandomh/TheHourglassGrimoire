@@ -1107,8 +1107,9 @@ function renderFlowChart()
 	connectFlowChart(jsPlumbInstance, "chartFeelingDemotivated", "chartWellBeingChecklist");
 	connectFlowChart(jsPlumbInstance, "chartWellBeingChecklist", "chartNebulousness");
 	connectFlowChart(jsPlumbInstance, "chartWellBeingChecklist", "chartExpectancy");
-	connectFlowChart(jsPlumbInstance, "chartSelfImprovement", "chartSelfImprovementGeneral");
-	connectFlowChart(jsPlumbInstance, "chartSelfImprovement", "chartSelfImprovementSpecific");
+	connectFlowChart(jsPlumbInstance, "chartSelfImprovement", "chartSelfImprovementBranch");
+	connectFlowChart(jsPlumbInstance, "chartSelfImprovementBranch", "chartSelfImprovementGeneral");
+	connectFlowChart(jsPlumbInstance, "chartSelfImprovementBranch", "chartSelfImprovementSpecific");
 
 	connectFlowChart(jsPlumbInstance, "chartStrategicDecision", "chartRefiningAPlan");
 	connectFlowChart(jsPlumbInstance, "chartStrategicDecision", "chartMakingADecision");
@@ -1355,12 +1356,17 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 		<div class="rightColumn" style="width: 390px">
 			<div class="techniqueHeading" id="chartSelfImprovement">Self Improvement</div>
 			<div class="smallSpacer"></div>
+			<div class="bubble" id="chartSelfImprovementBranch" style="width: 250px; margin: 0 auto;">
+				Do you have a specific skill in mind, or are you looking for
+				self-improvement ideas in general?
+			</div>
+			<div class="smallSpacer"></div>
 			<div class="leftColumn">
 				<div class="bubble" id="chartSelfImprovementGeneral">
 					<div class="techniqueHeading2">General</div>
-					(Not sure what to work on.)
 					<ul class="denseList">
 						<li><a href="#HammingPrompts" class="pageNumberRef">Hamming Prompts</a></li>
+						<li><a href="#YourBugsList" class="pageNumberRef">Your Bugs List</a></li>
 						<li>Identifying Goals</li>
 						<li><a href="#FindingOpportunitiesForSystemization" class="pageNumberRef">Finding Opportunities for Systemization</a></li>
 					</ul>
@@ -1369,7 +1375,6 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 			<div class="rightColumn">
 				<div class="bubble" id="chartSelfImprovementSpecific">
 					<div class="techniqueHeading2" id="">Specific</div>
-					(Have a goal in mind.)
 					<ul class="denseList">
 						<li>Turbocharging</li>
 						<li>CoZE</li>
