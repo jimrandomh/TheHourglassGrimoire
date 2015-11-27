@@ -1241,12 +1241,12 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 		<li><a href="#Systemization" class="pageNumberRef">Systemization</a></li>
 		<li><a href="#ComfortZoneExpansion" class="tocPlaceholder pageNumberRef">Comfort Zone Expansion</a></li>
 		<li><a href="#HammingPrompts" class="pageNumberRef">Hamming Prompts</a></li>
-		<li><a href="#OfflineHabitTraining" class="tocPlaceholder pageNumberRef">Offline Habit Training</a></li>
+		<li><a href="#OfflineHabitTraining" class="pageNumberRef">Offline Habit Training</a></li>
 		<li><a href="#Turbocharging" class="pageNumberRef">Turbocharging</a></li>
 	</ul>
 	<H4>Miscellaneous</H4>
 	<ul>
-		<li><a href="#FrameByFrameDebugging" class="tocPlaceholder pageNumberRef">Frame-by-Frame Debugging</a></li>
+		<li><a href="#FrameByFrameDebugging" class="pageNumberRef">Frame-by-Frame Debugging</a></li>
 		<li><a href="#FocusedGrit" class="pageNumberRef">Focused Grit</a></li>
 		<li><a href="#ValueOfInformation" class="pageNumberRef">Value of Information</a></li>
 		<li><a href="#MakingLargeUpdates" class="pageNumberRef">Making Large Updates</a></li>
@@ -1373,7 +1373,7 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 				<div class="bubble" id="chartObservedBug">
 					<div class="techniqueHeading2left">Of a bug</div>
 					<ul class="denseList">
-						<li>Frame-By-Frame Debugging</li>
+						<li><a href="#FrameByFrameDebugging" class="pageNumberRef">Frame-by-Frame Debugging</a></li>
 					</ul>
 				</div>
 				<div class="bubble" id="chartObservedBrightSpot">
@@ -2223,7 +2223,38 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 	</div>
 
 	<div class="numberedPage">
-		<!-- TODO -->
+		<H1 class="onlyPrint">Offline Habit Training</H1>
+
+        <div class="step" weight="1" duration="2">
+            <H3>Step 1: Pick a Habit</H3>
+            <P class="instructions">Choose a habit you want to install. Consider doing a Fermi estimate on the value of practicing it offline for 10 minutes.</P>
+        </div>
+
+        <div class="step" weight="1" duration="3">
+            <H3>Consider Alternatives</H3>
+            <P class="instructions">Are you sure you really want this habit?  If you lack motivation, maybe it's time for Goal Factoring and/or Propagating Urges.  If you find an action aversive, maybe it's time for Aversion Factoring or CoZE.  If there's a skill involved with this habit, e.g. a social or motor skill, maybe it's time for Turbocharging or skill-focused CoZE.</P>
+            <P class="instructions">Remember that habits are something you can just try out. So if you're unsure that this habit will be useful, you can just do a test run.</P>
+        </div>
+
+        <div class="step" weight="1" duration="3">
+            <H3>Make it Concrete and Repeatable</H3>
+            <P class="instructions">What's a very concrete and repeatable TAP you could train to help with your new habit?  (Concreteness is meant to make it easier for "System 1", particularly procedural memory, to help you with the habit, and repeatability lets you train it many times in a 10-minute time-span.)</P>
+        </div>
+
+        <div class="step" weight="1" durations="2">
+            <H3>Choose Vivid Associations and Movements to Link the Trigger and Action.</H3>
+        </div>
+
+        <div class="step" weight="2" duration="5">
+            <H3>Design a 5-10 Minute Training Exercise</H3>
+            <P class="instructions">Come up with an exercise that let's you practice the TAP you developed.</P>
+        </div>
+
+        <div class="step" weight="1" duration="3">
+            <H3>Scheduling</H3>
+            <P class="instructions">Schedule a time for when you can do this exercise. Send a reminder to future you to do it. Use murphyjitsu to ensure follow-through (or whatever it is you do to ensure follow-through).</P>
+        </div>
+
 	</div>
 </div> <!-- }}} -->
 <div class="section placeholder" id="FrameByFrameDebugging"> <!-- {{{ -->
@@ -2233,7 +2264,55 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 	</div>
 
 	<div class="numberedPage">
-		<!-- TODO -->
+		<H1 class="onlyPrint">Frame-by-Frame Debugging</H1>
+
+        <div class="step" weight="1" duration="1">
+            <H3>Step 0: Pick a bug</H3>
+        </div>
+
+        <div class="step" weight="2" duration="5">
+            <H3>Describe the bug</H3>
+            <P class="instructions">Pick a recent, concrete example of the bug occurring. Write it down.</P>
+        </div>
+
+        <div class="step" weight="2" duration="5">
+            <H3>Ask Where It Went Wrong</H3>
+            <P class="instructions">Try to figure out the exact moment at which the bug become unstoppable. This isn't always the obvious moment. If you found you yelled at someone in an argument, then it plausibly went wrong at the start of the argument, not the second before you yelled.</P>
+        </div>
+
+        <div class="step" weight="2" duration="5">
+            <H3>Did You Notice?</H3>
+            <P class="instructions">In the moment when it all went wrong, did you notice? Some bugs are just problems of forgetting to do anything, and some are problems of not doing anything even though you noticed. (These are not necessarily mutually exclusive).</P>
+        </div>
+
+        <div class="step" weight="2" duration="5">
+            <H3>Get To Noticing</H3>
+            <P class="instructions">If you didn't notice the bug at the moment it went wrong, complete this step. The goal is to come up with some way to cause yourself to notice the bug in the future. Some useful tools for noticing:</P>
+            <ul>
+                <li>TAPs and visualization</li>
+                <li>Offline Habit Training</li>
+                <li>Systemization</li>
+                <li>CoZE</li>
+            </ul>
+        </div>
+
+        <div class="step" weight="2" duration="5">
+            <H3>Motivating</H3>
+            <P class="instructions">If you didn't have enough motivation to stop the bug, complete this step. The goal is to make sure that in the future, if you notice a moment where everything can go wrong, you take a path that stop thats. Some useful tools:</P>
+            <ul>
+                <li>Goal factoring</li>
+                <li>Aversion factoring</li>
+                <li>Propagating urges</li>
+                <li>Sanity-inducing rituals</li>
+            </ul>
+        </div>
+
+        <div class="step" weight="2" duration="5">
+            <H3>Check the Plan</H3>
+            <P class="instructions">Regardless of the type of bug, the solution should be a form of generally applicable TAP. If it's possible for this TAP to execute when it shouldn't, you should take some time to revise it so that it doesn't. Next, perform murphyjitsu on the plan.</P>
+            <P class="instructions">As a possible final step, try the plan out, expecting it to fail. Pay attention to exactly how everything works, so that you can use the expected failure as a way to get information about improving your plan. (Of course if it doesn't fail you're good.)</P>
+        </div>
+
 	</div>
 </div> <!-- }}} -->
 <div class="section" id="FocusedGrit"> <!-- {{{ -->
