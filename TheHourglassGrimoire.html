@@ -299,6 +299,13 @@ H3 {
 	padding-left: 5px;
 }
 
+.techniqueHeading2left {
+	font-weight: bold;
+	text-decoration: underline;
+	padding-top: 0;
+	padding-left: 5px;
+}
+
 .denseList {
 	margin-top: 0;
 	margin-bottom: 0;
@@ -1325,19 +1332,19 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 
 			<div style="margin-left: 100px">
 				<div class="bubble" id="chartObservedBug">
-					...Of a bug
+					<div class="techniqueHeading2left">Of a bug</div>
 					<ul class="denseList">
 						<li>Frame-By-Frame Debugging</li>
 					</ul>
 				</div>
 				<div class="bubble" id="chartObservedBrightSpot">
-					...Of a bright spot
+					<div class="techniqueHeading2left">Of a bright spot</div>
 					<ul class="denseList">
 						<li>Capturing Bright Spots</li>
 					</ul>
 				</div>
 				<div class="bubble" id="chartObservedMotivation">
-					...Of a motivation or aversion
+					<div class="techniqueHeading2left">Of a motivation or aversion</div>
 					<ul class="denseList">
 						<li><a href="#GoalFactoring" class="pageNumberRef">Goal Factoring</a></li>
 						<li><a href="#AversionFactoring" class="pageNumberRef">Aversion Factoring</a></li>
@@ -1345,7 +1352,7 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 					</ul>
 				</div>
 				<div class="bubble" id="chartObservedWorld">
-					...Of the world
+					<div class="techniqueHeading2left">Of the world</div>
 					<ul class="denseList">
 						<li><a href="#MakingLargeUpdates" class="pageNumberRef">Making Large Updates</a></li>
 						<li><a href="#CrystallizingConcepts" class="pageNumberRef">Crystallizing Concepts</a></li>
@@ -1414,13 +1421,15 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 <div id="Preface" class="FrontMatter"> <!-- {{{ -->
 	<div class="numberedPage">
 
-    <H1 id="HowToUseThisBook">How To Use This Book</H1>
+	<H1 id="HowToUseThisBook">How To Use This Book</H1>
 
-    <P>This book is most useful when used frequently. The goal is to lower the activation energy required to use a CFAR worksheet (or one of your custom worksheets). Odds are pretty good that if you aren't used to using Hourglass, that you won't remember to use it when you actually need it. So the first thing you should do is create some <a href="#TriggerActionPlanning" class="pageNumberRef">TAPs</a> for using it. If you don't think TAPs will work for something like this, spend some time planning out some <a href="#Systemization" class="pageNumberRef">system</a> for using Hourglass. Don't forget to use <a href="#Murphyjitsu" class="pageNumberRef">murphyjitsu</a> to check your plan. Please don't move on from this section until you're reasonably confident that you'll reuse Hourglass in the future.</P>
+	<P>This book is most useful when used frequently. The goal is to lower the activation energy required to use rationality techniques. However, odds are that by default, you won't remember to use it when you actually need it. So the first thing you should do is look through The Hourglass Grimoire to decide whether it would be useful, and the second thing you should do is decide whether to embed it in your habits, and implement that decision.</P>
 
-    <P>This book has both digital and print versions. The digital version is a single HTML file; if you want to have it available for use, save the file on your computer or phone. No internet access is required; all resources are embedded in the file.</P>
+	<P>If you do decide you want to use The Hourglass Grimoire in the future, consider creating some <a href="#TriggerActionPlanning" class="pageNumberRef">Trigger-Action Plans (TAPs)</a>. If you don't think TAPs will work for something like this, spend some time planning out some <a href="#Systemization" class="pageNumberRef">system</a> for using it. Don't forget to use <a href="#Murphyjitsu" class="pageNumberRef">Murphy-Jitsu</a> to check your plan. Continue until you're reasonably confident that you'll use The Hourglass Grimoire when it makes sense to do so.</P>
 
-    <P>You can make a print version just by loading the HTML version and using your web browser's Print functionality. (You should use Google Chrome for this; other browsers will not necessarily work.) This will give you all of the instructions and three copies of each worksheet. Double-sided printing is strongly recommended; things are arranged so that worksheets and guidelines on how to use them will be facing pages. After that, you will want to punch holes and put the pages in a three-ring binder. You might also wish to decorate the binder to give it some salience.</P>
+	<P>This book has both digital and print versions. The digital version is a single HTML file; if you want to have it available for use, save the file on your computer or phone. No internet access is required; all resources are embedded in the file.</P>
+
+	<P>You can make a print version just by loading the HTML version and using your web browser's Print functionality. (You should use Google Chrome for this; other browsers will not necessarily work.) This will give you all of the instructions and three copies of each worksheet. Double-sided printing is strongly recommended; things are arranged so that worksheets and guidelines on how to use them will be facing pages. After that, you will want to punch holes and put the pages in a three-ring binder. You might also wish to decorate the binder to give it some salience.</P>
 
 	<H1 id="Introduction">Introduction</H1>
 
@@ -2500,7 +2509,7 @@ function connectFlowChartLeft(jsPlumbInstance, source, target)
 		
 		<H2>Print Issues</H2>
 		
-		<P>The second major difference from normal HTML is that the Hourglass
+		<P>The second major difference from normal HTML is that The Hourglass
 		Grimoire is designed for usage both in a web browser, and also in
 		print. Unfortunately, web-browser support for pagination and page
 		numbering is fairly bad, and the workarounds used have a few side
